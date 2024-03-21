@@ -13,7 +13,7 @@
 .. image:: https://img.shields.io/appveyor/ci/biopython/biopython/master.svg?logo=appveyor
    :alt: Windows testing with AppVeyor
    :target: https://ci.appveyor.com/project/biopython/biopython/history
-.. image:: https://img.shields.io/github/workflow/status/biopython/biopython/Basic%20Checks?logo=github-actions
+.. image:: https://img.shields.io/github/actions/workflow/status/biopython/biopython/ci.yml?logo=github-actions
    :alt: GitHub workflow status
    :target: https://github.com/biopython/biopython/actions
 .. image:: https://img.shields.io/codecov/c/github/biopython/biopython/master.svg?logo=codecov
@@ -33,19 +33,20 @@ Biopython README file
 The Biopython Project is an international association of developers of freely
 available Python tools for computational molecular biology.
 
-Our user-centric documentation is hosted on http://biopython.org including
-the main Biopython Tutorial and Cookbook:
-
-* HTML - http://biopython.org/DIST/docs/tutorial/Tutorial.html
-* PDF - http://biopython.org/DIST/docs/tutorial/Tutorial.pdf
-
 This README file is intended primarily for people interested in working
 with the Biopython source code, either one of the releases from the
 http://biopython.org website, or from our repository on GitHub
 https://github.com/biopython/biopython
 
+Our user-centric documentation, `The Biopython Tutorial and Cookbook, and API
+documentation <https://biopython.org/docs/latest/>`_, is generated from our
+repository using Sphinx.
+
 The `NEWS <https://github.com/biopython/biopython/blob/master/NEWS.rst>`_
-file summarises the changes in each release of Biopython.
+file summarises the changes in each release of Biopython, alongside the
+`DEPRECATED
+<https://github.com/biopython/biopython/blob/master/DEPRECATED.rst>`_
+file which notes API breakages.
 
 The Biopython package is open source software made available under generous
 terms. Please see the `LICENSE
@@ -73,7 +74,7 @@ with just one terminal command::
     pip uninstall biopython
 
 Since Biopython 1.70 we have provided pre-compiled binary wheel packages on
-PyPI for Linux, Mac OS X and Windows. This means pip install should be quick,
+PyPI for Linux, macOS and Windows. This means pip install should be quick,
 and not require a compiler.
 
 As a developer or potential contributor, you may wish to download, build and
@@ -83,14 +84,14 @@ install Biopython yourself. This is described below.
 Python Requirements
 ===================
 
-We currently recommend using Python 3.9 from http://www.python.org
+We currently recommend using Python 3.11 from http://www.python.org
 
 Biopython is currently supported and tested on the following Python
 implementations:
 
-- Python 3.7, 3.8, 3.9 -- see http://www.python.org
+- Python 3.8, 3.9, 3.10, 3.11 and 3.12 -- see http://www.python.org
 
-- PyPy3.7 v7.3.5 -- or later, see http://www.pypy.org
+- PyPy3.8 v7.3.11 -- or later, see http://www.pypy.org
 
 
 Optional Dependencies
@@ -161,7 +162,7 @@ at compile time:
 Then either download and decompress our source code, or fetch it using git.
 Now change directory to the Biopython source code folder and run::
 
-    python setup.py build
+    pip install -e .
     python setup.py test
     sudo python setup.py install
 
@@ -184,7 +185,7 @@ Biopython includes a suite of regression tests to check if everything is
 running correctly. To run the tests, go to the biopython source code
 directory and type::
 
-    python setup.py build
+    pip install -e .
     python setup.py test
 
 If you want to skip the online tests (which is recommended when doing repeated

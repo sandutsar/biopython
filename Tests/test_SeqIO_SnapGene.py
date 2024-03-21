@@ -5,6 +5,7 @@
 # Please see the LICENSE file that should have been included as part of this
 # package.
 """Tests for the SeqIO SnapGene module."""
+
 import datetime
 import unittest
 
@@ -15,7 +16,6 @@ from Bio.SeqFeature import CompoundLocation
 
 
 class TestSnapGene(unittest.TestCase):
-
     sample_data = {
         "sample-d": {
             "file": "SnapGene/sample-d.dna",
@@ -97,7 +97,7 @@ class TestSnapGene(unittest.TestCase):
             "id": "Sample",
             "description": "Sample Sequence F",
             "length": 1000,
-            "date": datetime.datetime(2021, 7, 26, 0, 0),
+            "date": datetime.datetime(2023, 1, 22, 0, 0),
             "topology": "circular",
             "features": [
                 {
@@ -127,6 +127,13 @@ class TestSnapGene(unittest.TestCase):
                         {"start": 187, "end": 207},
                         {"start": 214, "end": 241},
                     ],
+                },
+                {
+                    "type": "primer_bind",
+                    "start": 751,
+                    "end": 776,
+                    "strand": 1,
+                    "label": ["Primer 1"],
                 },
             ],
         },

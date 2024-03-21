@@ -12,6 +12,7 @@ with or without complementing C extensions.
 
 """
 
+import pickle
 import unittest
 import warnings
 
@@ -857,6 +858,12 @@ class TestOtherFunctions(unittest.TestCase):
         ]
         expected = [("ACCGT", "AC-G-", 3.0, 0, 4), ("ACCGT", "A-CG-", 3.0, 0, 4)]
         result = pairwise2._clean_alignments(alns)
+        self.assertEqual(expected, result)
+
+    def test_alignments_can_be_pickled(self):
+        alns = [("ACCGT", "AC-G-", 3.0, 0, 4)]
+        expected = [("ACCGT", "AC-G-", 3.0, 0, 4)]
+        result = pickle.loads(pickle.dumps(pairwise2._clean_alignments(alns)))
         self.assertEqual(expected, result)
 
     def test_print_matrix(self):

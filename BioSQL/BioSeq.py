@@ -18,6 +18,8 @@ Note: Currently we do not support recording per-letter-annotations
 (like quality scores) in BioSQL.
 """
 
+from typing import List, Optional
+
 from Bio.Seq import Seq, SequenceDataAbstractBaseClass
 from Bio.SeqRecord import SeqRecord, _RestrictedDict
 from Bio import SeqFeature
@@ -94,7 +96,8 @@ def _retrieve_seq_len(adaptor, primary_id):
     )
     if not seqs:
         return None
-    assert len(seqs) == 1
+    if len(seqs) != 1:
+        raise ValueError(f"Expected 1 response, got {len(seqs)}.")
     (given_length,) = seqs[0]
     return int(given_length)
 
@@ -112,23 +115,30 @@ def _retrieve_seq(adaptor, primary_id):
     )
     if not seqs:
         return
-    assert len(seqs) == 1
+    if len(seqs) != 1:
+        raise ValueError(f"Expected 1 response, got {len(seqs)}.")
     moltype, given_length, length = seqs[0]
 
     try:
         length = int(length)
         given_length = int(given_length)
-        assert length == given_length
+        if length != given_length:
+            raise ValueError(
+                f"'length' differs from sequence length, {given_length}, {length}"
+            )
         have_seq = True
     except TypeError:
-        assert length is None
+        if length is not None:
+            raise ValueError(f"Expected 'length' to be 'None', got {length}.")
         seqs = adaptor.execute_and_fetchall(
             "SELECT alphabet, length, seq FROM biosequence WHERE bioentry_id = %s",
             (primary_id,),
         )
-        assert len(seqs) == 1
+        if len(seqs) != 1:
+            raise ValueError(f"Expected 1 response, got {len(seqs)}.")
         moltype, given_length, seq = seqs[0]
-        assert seq is None or seq == ""
+        if seq:
+            raise ValueError(f"Expected 'seq' to have a falsy value, got {seq}.")
         length = int(given_length)
         have_seq = False
         del seq
@@ -267,24 +277,24 @@ def _retrieve_features(adaptor, primary_id):
                 adaptor, location_id
             )
             dbname, version = lookup.get(location_id, (None, None))
-            feature.location = SeqFeature.FeatureLocation(start, end)
-            feature.strand = strand
-            feature.ref_db = dbname
-            feature.ref = version
+            feature.location = SeqFeature.SimpleLocation(start, end)
+            feature.location.strand = strand
+            feature.location.ref_db = dbname
+            feature.location.ref = version
         else:
             locs = []
             for location in locations:
                 location_id, start, end, strand = location
                 dbname, version = lookup.get(location_id, (None, None))
                 locs.append(
-                    SeqFeature.FeatureLocation(
+                    SeqFeature.SimpleLocation(
                         start, end, strand=strand, ref=version, ref_db=dbname
                     )
                 )
             # Locations are typically in biological in order (see negative
             # strands below), but because of remote locations for
             # sub-features they are not necessarily in numerical order:
-            strands = {l.strand for l in locs}
+            strands = {_.strand for _ in locs}
             if len(strands) == 1 and -1 in strands:
                 # Evil hack time for backwards compatibility
                 # TODO - Check if BioPerl and (old) Biopython did the same,
@@ -323,9 +333,11 @@ def _retrieve_alphabet(adaptor, primary_id):
     results = adaptor.execute_and_fetchall(
         "SELECT alphabet FROM biosequence WHERE bioentry_id = %s", (primary_id,)
     )
-    assert len(results) == 1
+    if len(results) != 1:
+        raise ValueError(f"Expected 1 response, got {len(results)}.")
     alphabets = results[0]
-    assert len(alphabets) == 1
+    if len(alphabets) != 1:
+        raise ValueError(f"Expected 1 alphabet in response, got {len(alphabets)}.")
     alphabet = alphabets[0]
     if alphabet == "dna":
         molecule_type = "DNA"
@@ -383,7 +395,7 @@ def _retrieve_reference(adaptor, primary_id):
         if (start is not None) or (end is not None):
             if start is not None:
                 start -= 1  # python counting
-            reference.location = [SeqFeature.FeatureLocation(start, end)]
+            reference.location = [SeqFeature.SimpleLocation(start, end)]
         # Don't replace the default "" with None.
         if authors:
             reference.authors = authors
@@ -526,20 +538,20 @@ class DBSeqRecord(SeqRecord):
 
     seq = property(__get_seq, __set_seq, __del_seq, "Seq object")
 
-    def __get_dbxrefs(self):
+    @property
+    def dbxrefs(self) -> List[str]:
+        """Database cross references."""
         if not hasattr(self, "_dbxrefs"):
             self._dbxrefs = _retrieve_dbxrefs(self._adaptor, self._primary_id)
         return self._dbxrefs
 
-    def __set_dbxrefs(self, dbxrefs):
-        self._dbxrefs = dbxrefs
+    @dbxrefs.setter
+    def dbxrefs(self, value: List[str]) -> None:
+        self._dbxrefs = value
 
-    def __del_dbxrefs(self):
+    @dbxrefs.deleter
+    def dbxrefs(self) -> None:
         del self._dbxrefs
-
-    dbxrefs = property(
-        __get_dbxrefs, __set_dbxrefs, __del_dbxrefs, "Database cross references"
-    )
 
     def __get_features(self):
         if not hasattr(self, "_features"):
@@ -554,7 +566,9 @@ class DBSeqRecord(SeqRecord):
 
     features = property(__get_features, __set_features, __del_features, "Features")
 
-    def __get_annotations(self):
+    @property
+    def annotations(self) -> SeqRecord._AnnotationsDict:
+        """Annotations."""
         if not hasattr(self, "_annotations"):
             self._annotations = _retrieve_annotations(
                 self._adaptor, self._primary_id, self._taxon_id
@@ -565,12 +579,13 @@ class DBSeqRecord(SeqRecord):
                 self._annotations["data_file_division"] = self._division
         return self._annotations
 
-    def __set_annotations(self, annotations):
-        self._annotations = annotations
+    @annotations.setter
+    def annotations(self, value: Optional[SeqRecord._AnnotationsDict]) -> None:
+        if value:
+            self._annotations = value
+        else:
+            self._annotations = {}
 
-    def __del_annotations(self):
+    @annotations.deleter
+    def annotations(self) -> None:
         del self._annotations
-
-    annotations = property(
-        __get_annotations, __set_annotations, __del_annotations, "Annotations"
-    )

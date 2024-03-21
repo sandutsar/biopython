@@ -175,7 +175,6 @@ def _compute_gapopen_num(hsp):
 def _augment_blast_hsp(hsp, attr):
     """Calculate the given HSP attribute, for writing (PRIVATE)."""
     if not hasattr(hsp, attr) and not attr.endswith("_pct"):
-
         # aln_span is number of identical matches + mismatches + gaps
         if attr == "aln_span":
             hsp.aln_span = hsp.ident_num + hsp.mismatch_num + hsp.gap_num
@@ -196,13 +195,13 @@ def _augment_blast_hsp(hsp, attr):
 
     # if the attr is a percent value, calculate it
     if attr == "ident_pct":
-        hsp.ident_pct = hsp.ident_num / float(hsp.aln_span) * 100
+        hsp.ident_pct = hsp.ident_num / hsp.aln_span * 100
 
     elif attr == "pos_pct":
-        hsp.pos_pct = hsp.pos_num / float(hsp.aln_span) * 100
+        hsp.pos_pct = hsp.pos_num / hsp.aln_span * 100
 
     elif attr == "gap_pct":
-        hsp.gap_pct = hsp.gap_num / float(hsp.aln_span) * 100
+        hsp.gap_pct = hsp.gap_num / hsp.aln_span * 100
 
 
 class BlastTabParser:

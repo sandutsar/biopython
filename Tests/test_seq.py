@@ -4,7 +4,6 @@
 
 """Tests for seq module."""
 
-import array
 import copy
 import unittest
 import warnings
@@ -14,7 +13,7 @@ try:
 except ImportError:
     numpy = None
 
-from Bio import BiopythonWarning, BiopythonDeprecationWarning
+from Bio import BiopythonWarning
 from Bio import Seq
 from Bio.Data.IUPACData import (
     ambiguous_dna_complement,
@@ -295,6 +294,21 @@ class TestSeqStringMethods(unittest.TestCase):
                 self.assertEqual(a.strip(char), str(a).strip(str_char))
                 self.assertEqual(a.lstrip(char), str(a).lstrip(str_char))
                 self.assertEqual(a.rstrip(char), str(a).rstrip(str_char))
+                try:
+                    removeprefix = str(a).removeprefix(str_char)
+                    removesuffix = str(a).removesuffix(str_char)
+                except AttributeError:
+                    if str(a).startswith(str_char):
+                        removeprefix = str(a)[len(str_char) :]
+                    else:
+                        removeprefix = str(a)
+                    if str_char and str(a).endswith(str_char):
+                        removesuffix = str(a)[: -len(str_char)]
+                    else:
+                        removesuffix = str(a)
+
+                self.assertEqual(a.removeprefix(char), removeprefix)
+                self.assertEqual(a.removesuffix(char), removesuffix)
 
     def test_finding_characters(self):
         for a in self.dna + self.rna + self.nuc + self.protein:
@@ -306,11 +320,18 @@ class TestSeqStringMethods(unittest.TestCase):
                 self.assertEqual(a.rfind(char, 2, -2), str(a).rfind(str_char, 2, -2))
 
     def test_counting_characters(self):
+        from Bio.SeqRecord import SeqRecord
+
         for a in self.dna + self.rna + self.nuc + self.protein:
+            r = SeqRecord(a)
             for char in self.test_chars:
                 str_char = str(char)
-                self.assertEqual(a.count(char), str(a).count(str_char))
-                self.assertEqual(a.count(char, 2, -2), str(a).count(str_char, 2, -2))
+                n = str(a).count(str_char)
+                self.assertEqual(a.count(char), n)
+                self.assertEqual(r.count(char), n)
+                n = str(a).count(str_char, 2, -2)
+                self.assertEqual(a.count(char, 2, -2), n)
+                self.assertEqual(r.count(char, 2, -2), n)
 
     def test_splits(self):
         for a in self.dna + self.rna + self.nuc + self.protein:
@@ -535,17 +556,12 @@ class TestMutableSeq(unittest.TestCase):
         self.assertIsInstance(
             mutable_s, Seq.MutableSeq, "Initializing MutableSeq from MutableSeq"
         )
-        # Deprecated:
-        with self.assertWarns(BiopythonDeprecationWarning):
-            mutable_s = Seq.MutableSeq(array.array("u", sequence.decode("ASCII")))
-        self.assertIsInstance(
-            mutable_s, Seq.MutableSeq, "Creating MutableSeq using array"
-        )
-        self.assertEqual(mutable_s, self.s)
         self.assertRaises(
             UnicodeEncodeError, Seq.MutableSeq, "ÄþÇÐ"
         )  # All are Latin-1 characters
-        self.assertRaises(UnicodeEncodeError, Seq.MutableSeq, "あいうえお")  # These are not
+        self.assertRaises(
+            UnicodeEncodeError, Seq.MutableSeq, "あいうえお"
+        )  # These are not
 
     def test_repr(self):
         self.assertEqual("MutableSeq('TCAAAAGGATGCATCATG')", repr(self.mutable_s))
@@ -730,14 +746,7 @@ class TestMutableSeq(unittest.TestCase):
         """Test reverse using -1 stride."""
         self.assertEqual(Seq.MutableSeq("GTACTACGTAGGAAAACT"), self.mutable_s[::-1])
 
-    def test_complement_old(self):
-        # old approach
-        with self.assertWarns(BiopythonDeprecationWarning):
-            self.mutable_s.complement()
-        self.assertEqual("AGTTTTCCTACGTAGTAC", self.mutable_s)
-
     def test_complement(self):
-        # new approach
         self.mutable_s.complement(inplace=True)
         self.assertEqual("AGTTTTCCTACGTAGTAC", self.mutable_s)
 
@@ -780,47 +789,22 @@ class TestMutableSeq(unittest.TestCase):
         self.assertEqual(d, "TCAAAAGGATGCATCATG")
 
     def test_complement_mixed_aphabets(self):
-        # new approach
         seq = Seq.MutableSeq("AUGaaaCTG")
         seq.complement_rna(inplace=True)
         self.assertEqual("UACuuuGAC", seq)
-        # old approach
-        seq = Seq.MutableSeq("AUGaaaCTG")
-        with self.assertWarns(BiopythonDeprecationWarning):
-            with self.assertRaises(ValueError):
-                seq.complement()
 
     def test_complement_rna_string(self):
-        # new approach
         seq = Seq.MutableSeq("AUGaaaCUG")
         seq.complement_rna(inplace=True)
-        self.assertEqual("UACuuuGAC", seq)
-        # old approach
-        seq = Seq.MutableSeq("AUGaaaCUG")
-        with self.assertWarns(BiopythonDeprecationWarning):
-            seq.complement()
         self.assertEqual("UACuuuGAC", seq)
 
     def test_complement_dna_string(self):
-        # new approach
         seq = Seq.MutableSeq("ATGaaaCTG")
         seq.complement(inplace=True)
         self.assertEqual("TACtttGAC", seq)
-        # old approach
-        seq = Seq.MutableSeq("ATGaaaCTG")
-        with self.assertWarns(BiopythonDeprecationWarning):
-            seq.complement()
-        self.assertEqual("TACtttGAC", seq)
 
     def test_reverse_complement(self):
-        # new approach
         self.mutable_s.reverse_complement(inplace=True)
-        self.assertEqual("CATGATGCATCCTTTTGA", self.mutable_s)
-
-    def test_reverse_complement_old(self):
-        # old approach
-        with self.assertWarns(BiopythonDeprecationWarning):
-            self.mutable_s.reverse_complement()
         self.assertEqual("CATGATGCATCCTTTTGA", self.mutable_s)
 
     def test_extend_method(self):
@@ -851,121 +835,6 @@ class TestMutableSeq(unittest.TestCase):
             self.assertEqual(Seq.MutableSeq("TCXAAXGGXTGXATXATX"), self.mutable_s)
 
 
-class TestUnknownSeq(unittest.TestCase):
-    def setUp(self):
-        warnings.simplefilter("ignore", BiopythonDeprecationWarning)
-        self.s = Seq.UnknownSeq(6)
-        self.u = Seq.Seq(None, length=6)
-
-    def tearDown(self):
-        warnings.simplefilter("default", BiopythonDeprecationWarning)
-
-    def test_unknownseq_construction(self):
-        self.assertEqual("??????", Seq.UnknownSeq(6))
-        self.assertEqual("NNNNNN", Seq.UnknownSeq(6, character="N"))
-        self.assertEqual("XXXXXX", Seq.UnknownSeq(6, character="X"))
-        self.assertEqual("??????", Seq.UnknownSeq(6, character="?"))
-        with self.assertRaises(ValueError):
-            "??????" == self.u
-        with self.assertRaises(ValueError):
-            self.u == "??????"
-
-        with self.assertRaises(ValueError):
-            Seq.UnknownSeq(-10)
-
-        with self.assertRaises(ValueError):
-            Seq.Seq(None, length=-10)
-
-        with self.assertRaises(ValueError):
-            Seq.UnknownSeq(6, character="??")
-
-    def test_length(self):
-        self.assertEqual(6, len(self.s))
-        self.assertEqual(6, len(self.u))
-
-    def test_repr(self):
-        self.assertEqual("UnknownSeq(6, character='?')", repr(self.s))
-        self.assertEqual("Seq(None, length=6)", repr(self.u))
-
-    def test_add_method(self):
-        seq1 = Seq.UnknownSeq(3, character="N")
-        self.assertEqual("??????NNN", self.s + seq1)
-
-        seq2 = Seq.UnknownSeq(3, character="N")
-        self.assertEqual("NNNNNN", seq1 + seq2)
-
-    def test_getitem_method(self):
-        self.assertEqual("", self.s[-1:-1])
-        self.assertEqual("?", self.s[1])
-        self.assertEqual("?", self.s[5:])
-        self.assertEqual("?", self.s[:1])
-        self.assertEqual("??", self.s[1:3])
-        self.assertEqual("???", self.s[1:6:2])
-        self.assertEqual("????", self.s[1:-1])
-        with self.assertRaises(ValueError):
-            self.s[1:6:0]
-        with self.assertRaises(ValueError):
-            self.u[1:6:0]
-
-    def test_count(self):
-        self.assertEqual(6, self.s.count("?"))
-        self.assertEqual(3, self.s.count("??"))
-        self.assertEqual(0, Seq.UnknownSeq(6, character="N").count("?"))
-        self.assertEqual(0, Seq.UnknownSeq(6, character="N").count("??"))
-        self.assertEqual(4, Seq.UnknownSeq(6, character="?").count("?", start=2))
-        self.assertEqual(2, Seq.UnknownSeq(6, character="?").count("??", start=2))
-        self.assertRaises(ValueError, self.u.count, "?")
-
-    def test_complement(self):
-        self.s.complement()
-        self.assertEqual("??????", self.s)
-        t = self.u.complement()
-        self.assertEqual(len(t), 6)
-        self.assertRaises(ValueError, str, t)
-
-    def test_reverse_complement(self):
-        self.s.reverse_complement()
-        self.assertEqual("??????", self.s)
-        t = self.u.reverse_complement()
-        self.assertEqual(len(t), 6)
-        self.assertRaises(ValueError, str, t)
-
-    def test_transcribe(self):
-        self.assertEqual("??????", self.s.transcribe())
-        t = self.u.transcribe()
-        self.assertEqual(len(t), 6)
-        self.assertRaises(ValueError, str, t)
-
-    def test_back_transcribe(self):
-        self.assertEqual("??????", self.s.back_transcribe())
-        t = self.u.back_transcribe()
-        self.assertEqual(len(t), 6)
-        self.assertRaises(ValueError, str, t)
-
-    def test_upper(self):
-        seq = Seq.UnknownSeq(6, character="N")
-        self.assertEqual("NNNNNN", seq.upper())
-        self.assertEqual("Seq(None, length=6)", repr(self.u.upper()))
-
-    def test_lower(self):
-        seq = Seq.UnknownSeq(6, character="N")
-        self.assertEqual("nnnnnn", seq.lower())
-        self.assertEqual("Seq(None, length=6)", repr(self.u.lower()))
-
-    def test_translation(self):
-        self.assertEqual("XX", self.s.translate())
-        t = self.u.translate()
-        self.assertEqual(len(t), 2)
-        self.assertRaises(ValueError, str, t)
-
-    def test_ungap(self):
-        seq = Seq.UnknownSeq(7, character="N")
-        self.assertEqual("NNNNNNN", seq.ungap("-"))
-
-        seq = Seq.UnknownSeq(20, character="-")
-        self.assertEqual("", seq.ungap("-"))
-
-
 class TestAmbiguousComplements(unittest.TestCase):
     def test_ambiguous_values(self):
         """Test that other tests do not introduce characters to our values."""
@@ -992,28 +861,21 @@ class TestComplement(unittest.TestCase):
 
     def test_complement_incompatible_letters(self):
         seq = Seq.Seq("CAGGTU")
-        # new approach
-        dna = seq.complement(inplace=False)  # TODO: remove inplace=False
+        dna = seq.complement()
         self.assertEqual("GTCCAA", dna)
         rna = seq.complement_rna()
         self.assertEqual("GUCCAA", rna)
-        # old approach
-        with self.assertWarns(BiopythonDeprecationWarning):
-            with self.assertRaises(ValueError):
-                seq.complement()
 
     def test_complement_of_mixed_dna_rna(self):
         seq = "AUGAAACTG"  # U and T
-        self.assertRaises(ValueError, Seq.complement, seq)
+        dna = Seq.complement(seq)
+        self.assertEqual("TACTTTGAC", dna)
+        rna = Seq.complement_rna(seq)
+        self.assertEqual("UACUUUGAC", rna)
 
     def test_complement_of_rna(self):
         seq = "AUGAAACUG"
-        # new approach
         rna = Seq.complement_rna(seq)
-        self.assertEqual("UACUUUGAC", rna)
-        # old approach
-        with self.assertWarns(BiopythonDeprecationWarning):
-            rna = Seq.complement(seq)
         self.assertEqual("UACUUUGAC", rna)
 
     def test_complement_of_dna(self):
@@ -1081,16 +943,14 @@ class TestReverseComplement(unittest.TestCase):
 
     def test_reverse_complement_of_mixed_dna_rna(self):
         seq = "AUGAAACTG"  # U and T
-        self.assertRaises(ValueError, Seq.reverse_complement, seq)
+        dna = Seq.reverse_complement(seq)
+        self.assertEqual("CAGTTTCAT", dna)
+        rna = Seq.reverse_complement_rna(seq)
+        self.assertEqual("CAGUUUCAU", rna)
 
     def test_reverse_complement_of_rna(self):
-        # old approach
         seq = "AUGAAACUG"
-        with self.assertWarns(BiopythonDeprecationWarning):
-            rna = Seq.reverse_complement(seq)
-        self.assertEqual("CAGUUUCAU", rna)
-        # new approach
-        dna = Seq.reverse_complement(seq, inplace=False)  # TODO: remove inplace=False
+        dna = Seq.reverse_complement(seq)
         self.assertEqual("CAGTTTCAT", dna)
 
     def test_reverse_complement_of_dna(self):
@@ -1467,7 +1327,6 @@ class TestSeqDefined(unittest.TestCase):
             Seq.Seq(""),
             Seq.Seq(None, length=0),
             Seq.Seq({}, length=0),
-            Seq.UnknownSeq(length=0),
             Seq.MutableSeq(""),
         ]
 
@@ -1482,9 +1341,6 @@ class TestSeqDefined(unittest.TestCase):
         seq = Seq.Seq({3: "ACGT"}, length=10)
         self.assertFalse(seq.defined)
         self.assertEqual(seq.defined_ranges, ((3, 7),))
-        seq = Seq.UnknownSeq(length=1)
-        self.assertFalse(seq.defined)
-        self.assertEqual(seq.defined_ranges, ())
 
     def test_defined(self):
         seqs = [

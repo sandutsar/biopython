@@ -1,8 +1,9 @@
 # Copyright 2013 by Anthony Mathelier and David Arenillas. All rights reserved.
-# This code is part of the Biopython distribution and governed by its
-# license. Please see the LICENSE file that should have been included
-# as part of this package.
-
+#
+# This file is part of the Biopython distribution and governed by your
+# choice of the "Biopython License Agreement" or the "BSD 3-Clause License".
+# Please see the LICENSE file that should have been included as part of this
+# package.
 """JASPAR2014 module."""
 
 from Bio.Seq import Seq
@@ -10,6 +11,7 @@ import re
 import math
 
 from Bio import motifs
+from Bio import Align
 
 
 class Motif(motifs.Motif):
@@ -25,7 +27,7 @@ class Motif(motifs.Motif):
         matrix_id,
         name,
         alphabet="ACGT",
-        instances=None,
+        alignment=None,
         counts=None,
         collection=None,
         tf_class=None,
@@ -39,7 +41,7 @@ class Motif(motifs.Motif):
         comment=None,
     ):
         """Construct a JASPAR Motif instance."""
-        motifs.Motif.__init__(self, alphabet, instances, counts)
+        motifs.Motif.__init__(self, alphabet, alignment, counts)
         self.name = name
         self.matrix_id = matrix_id
         self.collection = collection
@@ -233,13 +235,13 @@ def _read_sites(handle):
         line = next(handle)
         instance = ""
         for c in line.strip():
-            if c == c.upper():
+            if c.isupper():
                 instance += c
         instance = Seq(instance)
         instances.append(instance)
 
-    instances = motifs.Instances(instances, alphabet)
-    motif = Motif(matrix_id=None, name=None, alphabet=alphabet, instances=instances)
+    alignment = Align.Alignment(instances)
+    motif = Motif(matrix_id=None, name=None, alphabet=alphabet, alignment=alignment)
     motif.mask = "*" * motif.length
     record = Record()
     record.append(motif)
@@ -333,7 +335,7 @@ def calculate_pseudocounts(motif):
     # number of instances.
     total = 0
     for i in range(motif.length):
-        total += sum(float(motif.counts[letter][i]) for letter in alphabet)
+        total += sum(motif.counts[letter][i] for letter in alphabet)
 
     avg_nb_instances = total / motif.length
     sq_nb_instances = math.sqrt(avg_nb_instances)

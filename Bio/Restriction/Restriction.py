@@ -82,10 +82,10 @@ Notes about the diverses class of the restriction enzyme implementation::
 
 """
 
-
 import warnings
 
 import re
+import string
 import itertools
 
 from Bio.Seq import Seq, MutableSeq
@@ -94,33 +94,6 @@ from Bio.Restriction.Restriction_Dictionary import typedict
 from Bio.Restriction.Restriction_Dictionary import suppliers as suppliers_dict
 from Bio.Restriction.PrintFormat import PrintFormat
 from Bio import BiopythonWarning
-
-
-# Used to use Bio.Restriction.DNAUtils.check_bases (and expose it under this
-# namespace), but have deprecated that module.
-
-
-def _check_bases(seq_string):
-    """Check characters in a string (PRIVATE).
-
-    Remove digits and white space present in string. Allows any valid ambiguous
-    IUPAC DNA single letters codes (ABCDGHKMNRSTVWY, lower case are converted).
-
-    Other characters (e.g. symbols) trigger a TypeError.
-
-    Returns the string WITH A LEADING SPACE (!). This is for backwards
-    compatibility, and may in part be explained by the fact that
-    ``Bio.Restriction`` doesn't use zero based counting.
-    """
-    # Remove white space and make upper case:
-    seq_string = "".join(seq_string.split()).upper()
-    # Remove digits
-    for c in "0123456789":
-        seq_string = seq_string.replace(c, "")
-    # Check only allowed IUPAC letters
-    if not set(seq_string).issubset(set("ABCDGHKMNRSTVWY")):
-        raise TypeError(f"Invalid character found in {seq_string!r}")
-    return " " + seq_string
 
 
 matching = {
@@ -144,6 +117,15 @@ matching = {
 DNA = Seq
 
 
+def _make_FormattedSeq_table() -> bytes:
+    table = bytearray(256)
+    upper_to_lower = ord("A") - ord("a")
+    for c in b"ABCDGHKMNRSTVWY":  # Only allow IUPAC letters
+        table[c] = c  # map uppercase to uppercase
+        table[c - upper_to_lower] = c  # map lowercase to uppercase
+    return bytes(table)
+
+
 class FormattedSeq:
     """A linear or circular sequence object for restriction analysis.
 
@@ -157,6 +139,9 @@ class FormattedSeq:
     circular. Restriction sites are search over the edges of circular sequence.
     """
 
+    _remove_chars = string.whitespace.encode() + string.digits.encode()
+    _table = _make_FormattedSeq_table()
+
     def __init__(self, seq, linear=True):
         """Initialize ``FormattedSeq`` with sequence and topology (optional).
 
@@ -165,10 +150,13 @@ class FormattedSeq:
         will have no effect on the shape of the sequence.
         """
         if isinstance(seq, (Seq, MutableSeq)):
-            stringy = str(seq)
-            self.lower = stringy.islower()
+            self.lower = seq.islower()
+            data = bytes(seq)
+            self.data = data.translate(self._table, delete=self._remove_chars)
+            if 0 in self.data:  # Check if all letters were IUPAC
+                raise TypeError(f"Invalid character found in {data.decode()}")
             # Note this adds a leading space to the sequence (!)
-            self.data = _check_bases(stringy)
+            self.data = " " + self.data.decode("ASCII")
             self.linear = linear
             self.klass = seq.__class__
         elif isinstance(seq, FormattedSeq):
@@ -1806,7 +1794,7 @@ class Ambiguous(AbstractCut):
             elif 0 <= f3 + length <= length:
                 re = "N^" + abs(f5) * "N" + site[:f3] + "_" + site[f3:]
             elif f3 + length < 0:
-                re = "N^" * abs(f5) * "N" + "_" + abs(length + f3) * "N" + site
+                re = "N^" + abs(f5) * "N" + "_" + abs(length + f3) * "N" + site
             elif f5 > length:
                 re = site + (f5 - length) * "N" + "^" + (length + f3 - f5) * "N" + "_N"
             else:
@@ -2649,19 +2637,19 @@ for TYPE, (bases, enzymes) in typedict.items():
     #
     #   First eval the bases.
     #
-    bases = tuple(eval(x) for x in bases)
+    bases2 = tuple(eval(x) for x in bases)
     #
     #   now create the particular value of RestrictionType for the classes
     #   in enzymes.
     #
-    T = type.__new__(RestrictionType, "RestrictionType", bases, {})
+    T = type.__new__(RestrictionType, "RestrictionType", bases2, {})
     for k in enzymes:
         #
         #   Now, we go through all the enzymes and assign them their type.
         #   enzymedict[k] contains the values of the attributes for this
         #   particular class (self.site, self.ovhg,....).
         #
-        newenz = T(k, bases, enzymedict[k])
+        newenz = T(k, bases2, enzymedict[k])
         #
         #   we add the enzymes to the corresponding batch.
         #
@@ -2689,4 +2677,4 @@ __all__ = (
     "CommOnly",
     "NonComm",
 ) + tuple(names)
-del k, enzymes, TYPE, bases, names
+del k, enzymes, TYPE, bases, bases2, names

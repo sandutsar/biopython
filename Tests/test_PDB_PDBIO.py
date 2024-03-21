@@ -22,7 +22,6 @@ from Bio import BiopythonWarning
 from Bio.PDB import PDBParser, PDBIO, Select
 from Bio.PDB import Atom, Residue
 from Bio.PDB.PDBExceptions import (
-    PDBConstructionException,
     PDBConstructionWarning,
     PDBIOException,
 )
@@ -78,6 +77,44 @@ class WriteTest(unittest.TestCase):
             self.assertEqual(og_serials, serials)
         finally:
             os.remove(filename)
+
+    def test_pdbio_pdb_format_limits(self):
+        """Test raising error when structure cannot meet PDB format limits."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", PDBConstructionWarning)
+            structure = self.parser.get_structure("example", "PDB/1A8O.pdb")
+
+        # Modify structure and check if parser raises an error
+        # Chain id
+        structure[0]["A"].id = "AA"
+        self.io.set_structure(structure)
+        filenumber, filename = tempfile.mkstemp()
+        os.close(filenumber)
+        with self.assertRaises(PDBIOException):
+            self.io.save(filename)
+        structure[0]["AA"].id = "A"
+        os.remove(filename)
+
+        # Residue id
+        het, ori, ins = structure[0]["A"][152].id
+        structure[0]["A"][152].id = (het, 10000, ins)
+        self.io.set_structure(structure)
+        filenumber, filename = tempfile.mkstemp()
+        os.close(filenumber)
+        with self.assertRaises(PDBIOException):
+            self.io.save(filename)
+        structure[0]["A"][10000].id = (het, ori, ins)
+        os.remove(filename)
+
+        # Atom id
+        structure[0]["A"][152]["CA"].serial_number = 1e6
+        self.io.set_structure(structure)
+        filenumber, filename = tempfile.mkstemp()
+        os.close(filenumber)
+        with self.assertRaises(PDBIOException):
+            # perserve_... must be True for exception to trigger
+            self.io.save(filename, preserve_atom_numbering=True)
+        os.remove(filename)
 
     def test_pdbio_write_auto_numbering(self):
         """Test writing PDB and do not preserve atom numbering."""
@@ -195,6 +232,8 @@ class WriteTest(unittest.TestCase):
 
     def test_pdbio_select(self):
         """Write a selection of the structure using a Select subclass."""
+        # This method has an internal class definition
+
         # Selection class to filter all alpha carbons
         class CAonly(Select):
             """Accepts only CA residues."""
@@ -254,7 +293,7 @@ class WriteTest(unittest.TestCase):
             self.io.save(filename)
             # Check if there are lines besides 'ATOM', 'TER' and 'END'
             with open(filename) as handle:
-                record_set = {l[0:6] for l in handle}
+                record_set = {line[0:6] for line in handle}
             record_set -= {
                 "ATOM  ",
                 "HETATM",

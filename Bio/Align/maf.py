@@ -28,9 +28,9 @@ As we can see on this example, ``start + size`` will give one more than the
 zero-based end position. We can therefore manipulate ``start`` and
 ``start + size`` as python list slice boundaries.
 """
-import shlex
 
-from itertools import chain
+import shlex
+import itertools
 
 
 from Bio.Align import Alignment
@@ -42,8 +42,9 @@ from Bio.SeqRecord import SeqRecord
 class AlignmentWriter(interfaces.AlignmentWriter):
     """Accepts Alignment objects, writes a MAF file."""
 
-    def _write_trackline(self, metadata):
-        stream = self.stream
+    fmt = "MAF"
+
+    def _write_trackline(self, stream, metadata):
         stream.write("track")
         for key, value in metadata.items():
             if key in ("name", "description", "frames"):
@@ -68,10 +69,12 @@ class AlignmentWriter(interfaces.AlignmentWriter):
             stream.write(f" {key}={value}")
         stream.write("\n")
 
-    def write_header(self, alignments):
+    def write_header(self, stream, alignments):
         """Write the MAF header."""
-        stream = self.stream
-        metadata = alignments.metadata
+        try:
+            metadata = alignments.metadata
+        except AttributeError:
+            metadata = {"MAF Version": "1"}
         track_keys = (
             "name",
             "description",
@@ -82,63 +85,70 @@ class AlignmentWriter(interfaces.AlignmentWriter):
         )
         for key in track_keys:
             if key in metadata:
-                self._write_trackline(metadata)
+                self._write_trackline(stream, metadata)
                 break
         stream.write("##maf")
         for key, value in metadata.items():
             if key in track_keys:
                 continue
-            if key == "comments":
+            if key == "Comments":
                 continue
-            if key not in ("version", "scoring", "program"):
+            if key == "MAF Version":
+                if value != "1":
+                    raise ValueError("MAF version must be 1")
+                key = "version"
+            elif key == "Scoring":
+                key = "scoring"
+            elif key == "Program":
+                key = "program"
+            else:
                 raise ValueError("Unexpected key '%s' for header" % key)
-            if key == "version" and value != "1":
-                raise ValueError("MAF version must be 1")
             stream.write(f" {key}={value}")
         stream.write("\n")
-        comments = metadata.get("comments")
+        comments = metadata.get("Comments")
         if comments is not None:
             for comment in comments:
                 stream.write(f"# {comment}\n")
             stream.write("\n")
 
-    def _write_score_line(self, alignment, annotations):
-        stream = self.stream
-        stream.write("a")
+    def _format_score_line(self, alignment, annotations):
         try:
             score = alignment.score
         except AttributeError:
-            pass
+            line = "a"
         else:
-            stream.write(f" score={score:.6f}")
-        if annotations is not None:
-            value = annotations.get("pass")
-            if value is not None:
-                stream.write(f" pass={value}")
-        stream.write("\n")
+            line = f"a score={score:.6f}"
+        value = annotations.get("pass")
+        if value is not None:
+            line += f" pass={value}"
+        return line + "\n"
 
-    def write_alignment(self, alignment):
-        """Write a complete alignment to a MAF block."""
+    def format_alignment(self, alignment):
+        """Return a string with a single alignment formatted as a MAF block."""
         if not isinstance(alignment, Alignment):
             raise TypeError("Expected an Alignment object")
         try:
             alignment_annotations = alignment.annotations
         except AttributeError:
-            alignment_annotations = None
-        self._write_score_line(alignment, alignment_annotations)
+            alignment_annotations = {}
+        lines = []
+        line = self._format_score_line(alignment, alignment_annotations)
+        lines.append(line)
         name_width = 0
         start_width = 0
         size_width = 0
         length_width = 0
-        stream = self.stream
         n = len(alignment.sequences)
         for i in range(n):
             record = alignment.sequences[i]
             coordinates = alignment.coordinates[i]
-            name = record.id
+            try:
+                name = record.id
+            except AttributeError:
+                name = "sequence_%d" % i
             start = coordinates[0]
             end = coordinates[-1]
-            length = len(record.seq)
+            length = len(record)
             if start < end:
                 size = end - start
             else:
@@ -148,9 +158,12 @@ class AlignmentWriter(interfaces.AlignmentWriter):
             start_width = max(start_width, len(str(start)))
             size_width = max(size_width, len(str(size)))
             length_width = max(length_width, len(str(length)))
-        for empty in alignment_annotations.get("empty", []):
+        for i, empty in enumerate(alignment_annotations.get("empty", [])):
             record, segment, status = empty
-            name = record.id
+            try:
+                name = record.id
+            except AttributeError:
+                name = "sequence_%d" % (i + n)
             name_width = max(name_width, len(name))
             start, end = segment
             length = len(record.seq)
@@ -166,10 +179,13 @@ class AlignmentWriter(interfaces.AlignmentWriter):
         for i in range(n):
             record = alignment.sequences[i]
             coordinates = alignment.coordinates[i]
-            name = record.id
+            try:
+                record_id = record.id
+            except AttributeError:
+                record_id = "sequence_%d" % i
             start = coordinates[0]
             end = coordinates[-1]
-            length = len(record.seq)
+            length = len(record)
             if start < end:
                 size = end - start
                 strand = "+"
@@ -178,12 +194,12 @@ class AlignmentWriter(interfaces.AlignmentWriter):
                 start = length - start
                 strand = "-"
             text = alignment[i]
-            name = record.id.ljust(name_width)
+            name = record_id.ljust(name_width)
             start = str(start).rjust(start_width)
             size = str(size).rjust(size_width)
             length = str(length).rjust(length_width)
             line = f"s {name} {start} {size} {strand} {length} {text}\n"
-            stream.write(line)
+            lines.append(line)
             try:
                 annotations = record.annotations
             except AttributeError:
@@ -192,16 +208,16 @@ class AlignmentWriter(interfaces.AlignmentWriter):
                 quality = annotations.get("quality")
                 if quality is not None:
                     gapped_quality = ""
-                    i = 0
+                    j = 0
                     for letter in text:
                         if letter == "-":
                             gapped_quality += "-"
                         else:
-                            gapped_quality += quality[i]
-                            i += 1
-                    name = record.id.ljust(quality_width)
+                            gapped_quality += quality[j]
+                            j += 1
+                    name = record_id.ljust(quality_width)
                     line = f"q {name} {gapped_quality}\n"
-                    stream.write(line)
+                    lines.append(line)
                 try:
                     leftStatus = annotations["leftStatus"]
                     leftCount = annotations["leftCount"]
@@ -210,12 +226,16 @@ class AlignmentWriter(interfaces.AlignmentWriter):
                 except KeyError:
                     pass
                 else:
-                    name = record.id.ljust(name_width)
+                    name = record_id.ljust(name_width)
                     line = f"i {name} {leftStatus} {leftCount} {rightStatus} {rightCount}\n"
-                    stream.write(line)
-        for empty in alignment_annotations.get("empty", []):
+                    lines.append(line)
+        for i, empty in enumerate(alignment_annotations.get("empty", [])):
             record, segment, status = empty
-            name = record.id.ljust(name_width)
+            try:
+                name = record.id
+            except AttributeError:
+                name = "sequence_%d" % (i + n)
+            name = name.ljust(name_width)
             start, end = segment
             length = len(record.seq)
             if start <= end:
@@ -229,8 +249,9 @@ class AlignmentWriter(interfaces.AlignmentWriter):
             size = str(size).rjust(size_width)
             length = str(length).rjust(length_width)
             line = f"e {name} {start} {size} {strand} {length} {status}\n"
-            stream.write(line)
-        stream.write("\n")
+            lines.append(line)
+        lines.append("\n")
+        return "".join(lines)
 
 
 class AlignmentIterator(interfaces.AlignmentIterator):
@@ -250,18 +271,12 @@ class AlignmentIterator(interfaces.AlignmentIterator):
     ``.annotations`` attribute of the corresponding sequence record.
     """
 
+    fmt = "MAF"
+
     status_characters = ("C", "I", "N", "n", "M", "T")
     empty_status_characters = ("C", "I", "M", "n")
 
-    def __init__(self, source):
-        """Create an AlignmentIterator object.
-
-        Arguments:
-         - source   - input data or file name
-
-        """
-        super().__init__(source, mode="t", fmt="MAF")
-        stream = self.stream
+    def _read_header(self, stream):
         metadata = {}
         line = next(stream)
         if line.startswith("track "):
@@ -293,85 +308,63 @@ class AlignmentIterator(interfaces.AlignmentIterator):
             raise ValueError("header line does not start with ##maf")
         for word in words[1:]:
             key, value = word.split("=")
-            if key not in ("version", "scoring", "program"):
+            if key == "version":
+                key = "MAF Version"
+            elif key == "scoring":
+                key = "Scoring"
+            elif key == "program":
+                key = "Program"
+            else:
                 raise ValueError("Unexpected variable '%s' in header line" % key)
             metadata[key] = value
-        if metadata.get("version") != "1":
+        if metadata.get("MAF Version") != "1":
             raise ValueError("MAF version must be 1")
         comments = []
         for line in stream:
             if line.strip():
                 if not line.startswith("#"):
-                    self.line = line
+                    assert line.startswith("a")
+                    self._aline = line
                     break
                 comment = line[1:].strip()
                 comments.append(comment)
         else:
-            self.stream = None
-            self.line = None
+            self._close()
         if comments:
-            metadata["comments"] = comments
+            metadata["Comments"] = comments
         self.metadata = metadata
 
-    @staticmethod
-    def create_alignment(
-        records,
-        aligned_sequences,
-        strands,
-        annotations,
-        column_annotations,
-        score,
-    ):
-        """Create the Alignment object from the collected alignment data."""
-        coordinates = Alignment.infer_coordinates(aligned_sequences)
-        for record, strand, row in zip(records, strands, coordinates):
-            if strand == "-":
-                row[:] = row[-1] - row[0] - row
-            start = record.seq.defined_ranges[0][0]
-            row += start
-        alignment = Alignment(records, coordinates)
-        if annotations is not None:
-            alignment.annotations = annotations
-        if column_annotations is not None:
-            alignment.column_annotations = column_annotations
-        if score is not None:
-            alignment.score = score
+    def _read_next_alignment(self, stream):
+        aline = self._aline
+        if aline is None:
+            return
+        alignment = self._create_alignment(aline, stream)
         return alignment
 
-    def parse(self, stream):
-        """Parse the next alignment from the stream."""
-        if stream is None:
-            raise StopIteration
+    def _create_alignment(self, aline, stream):
+        records = []
+        strands = []
+        aligned_sequences = []
+        annotations = {}
+        words = aline[1:].split()
+        for word in words:
+            key, value = word.split("=")
+            if key == "score":
+                score = float(value)
+            elif key == "pass":
+                value = int(value)
+                if value <= 0:
+                    raise ValueError("pass value must be positive (found %d)" % value)
+                annotations["pass"] = value
+            else:
+                raise ValueError("Unknown annotation variable '%s'" % key)
 
-        line = self.line
-        self.line = None
-        if line is not None:
-            lines = chain([line], stream)
-        else:
-            lines = stream
-        records = None
-        for line in lines:
-            if line.startswith("a"):
-                strands = []
-                annotations = {}
-                column_annotations = {}
-                records = []
-                aligned_sequences = []
-                score = None
-                words = line[1:].split()
-                for word in words:
-                    key, value = word.split("=")
-                    if key == "score":
-                        score = float(value)
-                    elif key == "pass":
-                        value = int(value)
-                        if value <= 0:
-                            raise ValueError(
-                                "pass value must be positive (found %d)" % value
-                            )
-                        annotations["pass"] = value
-                    else:
-                        raise ValueError("Unknown annotation variable '%s'" % key)
+        for line in stream:
+            if line.startswith("#"):
+                continue
+            elif line.startswith("a"):
+                self._aline = line
+                break
             elif line.startswith("s "):
                 words = line.strip().split()
                 if len(words) != 7:
@@ -397,7 +390,7 @@ class AlignmentIterator(interfaces.AlignmentIterator):
                     sequence = reverse_complement(sequence)
                     start = srcSize - start - size
                 seq = Seq({start: sequence}, length=srcSize)
-                record = SeqRecord(seq, id=src)
+                record = SeqRecord(seq, id=src, name="", description="")
                 records.append(record)
                 strands.append(strand)
             elif line.startswith("i "):
@@ -425,7 +418,7 @@ class AlignmentIterator(interfaces.AlignmentIterator):
                 status = words[5]
                 assert status in AlignmentIterator.empty_status_characters
                 sequence = Seq(None, length=srcSize)
-                record = SeqRecord(sequence, id=src)
+                record = SeqRecord(sequence, id=src, name="", description="")
                 end = start + size
                 if strand == "+":
                     segment = (start, end)
@@ -444,25 +437,22 @@ class AlignmentIterator(interfaces.AlignmentIterator):
                 value = words[2].replace("-", "")
                 record.annotations["quality"] = value
             elif not line.strip():
-                # reached the end of this alignment
-                yield AlignmentIterator.create_alignment(
-                    records,
-                    aligned_sequences,
-                    strands,
-                    annotations,
-                    column_annotations,
-                    score,
-                )
-                records = None
+                # reached the end of the alignment, but keep reading until we
+                # find the next alignment
+                continue
             else:
                 raise ValueError(f"Error parsing alignment - unexpected line:\n{line}")
-        if records is None:
-            return
-        yield AlignmentIterator.create_alignment(
-            records,
-            aligned_sequences,
-            strands,
-            annotations,
-            column_annotations,
-            score,
-        )
+        else:
+            self._aline = None
+        coordinates = Alignment.infer_coordinates(aligned_sequences)
+        for record, strand, row in zip(records, strands, coordinates):
+            if strand == "-":
+                row[:] = row[-1] - row[0] - row
+            start = record.seq.defined_ranges[0][0]
+            row += start
+        alignment = Alignment(records, coordinates)
+        if annotations is not None:
+            alignment.annotations = annotations
+        if score is not None:
+            alignment.score = score
+        return alignment

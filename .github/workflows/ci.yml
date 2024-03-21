@@ -15,30 +15,30 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   # Style Checking: Linux and Python version only.
   style:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     # Check for changes only on files changed by the PR/push
-    - uses: trilom/file-changes-action@v1.2.4
-      with:
-        # Creates 'files.txt' by default
-        output: ' '
-        fileOutput: ' '
+    - uses: tj-actions/changed-files@v43
+      id: changed-files
 
     # Cache CI packages
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       id: cache-precommit
       with:
         path: ~/.cache/pre-commit
         key: ${{ runner.os }}-precommit-hooks-v2-${{ hashFiles('**/.pre-commit-config.yaml') }}
 
     - name: Setup Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: 3.9
 
@@ -53,7 +53,7 @@ jobs:
 
     - name: Run style checking via pre-commit
       run: |
-        pre-commit run --files $( cat ${HOME}/files.txt )
+        pre-commit run --files ${{ steps.changed-files.outputs.all_changed_files }}
 
   # Cache pip & python dependencies for Linux runner
   # since it is used in most actions.
@@ -63,26 +63,29 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Setup Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    
-    - uses: actions/cache@v2
+
+    - uses: actions/cache@v4
       id: cache-pip
       with:
         path: ${{ env.pythonLocation }}
         key: ${{runner.os}}-${{ env.pythonLocation }}-${{ matrix.python-version }}-v2-${{ hashFiles('setup.py') }}-${{ hashFiles('**/ci-dependencies.txt') }}
 
+    - name: Install Python packaging tools
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+
     - name: Install Python dependencies
       if: steps.cache-pip.outputs.cache-hit != 'true'
       run: |
-        python -m pip install --upgrade pip setuptools wheel
         python -m pip install --upgrade --upgrade-strategy eager -r ci-dependencies.txt
 
   # Try building package:
@@ -93,10 +96,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: 3.9
 
@@ -112,15 +115,15 @@ jobs:
     needs: [style]
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9]
+        os: [ubuntu-latest, macos-latest, windows-2019]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -163,23 +166,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.10", "3.11"]
 
     steps:
 
     # Start MySQL server: required for some tests.
     - run: |
         sudo /etc/init.d/mysql start
-        
-    - uses: actions/checkout@v2
+
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     # Retrieve cache to speed things up
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       id: cache-pip
       with:
         path: ${{ env.pythonLocation }}
@@ -188,16 +191,15 @@ jobs:
     - name: Install dependencies
       if: steps.cache-pip.outputs.cache-hit != 'true'
       run: |
-          python -m pip install --upgrade pip setuptools wheel
           python -m pip install --upgrade --upgrade-strategy eager -r ci-dependencies.txt
 
     - name: Debug Info
       run: |
-        pip freeze
+        python -m pip list
 
     - name: Install from source
       run: |
-        python setup.py install
+        python -m pip install .
 
     - name: Run test suite and get coverage
       run: |
@@ -213,27 +215,30 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.12"]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install minimal Python dependencies
+    - name: Install Python packaging tools
       run: |
         python -m pip install --upgrade pip setuptools wheel
+
+    - name: Install minimal Python dependencies
+      run: |
         python -m pip install numpy
 
     - name: Debug Info
       run: |
-        pip freeze
+        python -m pip list
 
     - name: Install from source
       run: |
-        python setup.py install
+        python -m pip install .
 
     - name: Run test suite
       run: |
@@ -243,30 +248,35 @@ jobs:
   test_windows:
     timeout-minutes: 15
     needs: [style, build, build_wheels]
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        # TODO - Try Python 3.11 again, was Python 3.11.0 was
+        # failing when trying to delete SQlite databases.
+        python-version: ["3.8", "3.10", "3.12"]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install minimal Python dependencies
+    - name: Install Python packaging tools
       run: |
         python -m pip install --upgrade pip setuptools wheel
+
+    - name: Install minimal Python dependencies
+      run: |
         python -m pip install numpy
 
     - name: Debug Info
       run: |
-        pip freeze
+        python -m pip list
 
     - name: Install from source
       run: |
-        python setup.py install
+        python -m pip install .
 
     - name: Run test suite
       run: |
@@ -279,27 +289,30 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [pypy-3.7]
+        python-version: [pypy-3.9]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install minimal Python dependencies
+    - name: Install Python packaging tools
       run: |
         python -m pip install --upgrade pip setuptools wheel
+
+    - name: Install minimal Python dependencies
+      run: |
         python -m pip install numpy
 
     - name: Debug Info
       run: |
-        pip freeze
+        python -m pip list
 
     - name: Install from source
       run: |
-        python setup.py install
+        python -m pip install .
 
     - name: Run test suite
       run: |
@@ -319,43 +332,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: 3.9
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       id: cache-pip
       with:
         path: ${{ env.pythonLocation }}
         key: ${{runner.os}}-${{ env.pythonLocation }}-${{ matrix.python-version }}-v2-${{ hashFiles('setup.py') }}-${{ hashFiles('**/ci-dependencies.txt') }}
 
+    - name: Install Python packaging tools
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+
     - name: Install dependencies
       if: steps.cache-pip.outputs.cache-hit != 'true'
       run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install --upgrade --upgrade-strategy eager -r ci-dependencies.txt
+        python -m pip install --upgrade --upgrade-strategy eager -r .circleci/requirements-sphinx.txt
 
     - name: Debug Info
       run: |
-        pip freeze
+        python -m pip list
 
     - name: Install from source
       run: |
-        python setup.py install
+        python -m pip install .
 
     - name: Make documentation
       run: |
-        make -C Doc/api html
+        make -C Doc html
       shell: bash
-    
+
   cleanup_wheels:
     if: always()
     needs: [build_wheels]
     runs-on: ubuntu-latest
     steps:
-      - uses: geekyeggo/delete-artifact@v1
+      - uses: geekyeggo/delete-artifact@v4
         with:
           name: biopython_wheels

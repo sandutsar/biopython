@@ -19,11 +19,22 @@ This aims to estimate two parameters:
   in the training data.
 
 """
+
 # standard modules
 import math
+import warnings
 
 # local stuff
 from .DynamicProgramming import ScaledDPAlgorithms
+
+from Bio import BiopythonDeprecationWarning
+
+warnings.warn(
+    "The 'Bio.HMM.Trainer' module is deprecated and will be removed "
+    "in a future release of Biopython. Consider using the hmmlearn "
+    "package instead.",
+    BiopythonDeprecationWarning,
+)
 
 
 class TrainingSequence:
@@ -142,7 +153,7 @@ class AbstractTrainer:
                 pass
 
             # now calculate the ml and add it to the estimation
-            cur_ml = float(counts[cur_item]) / float(cur_letter_counts)
+            cur_ml = counts[cur_item] / cur_letter_counts
             ml_estimation[cur_item] = cur_ml
 
         return ml_estimation
@@ -278,7 +289,7 @@ class BaumWelchTrainer(AbstractTrainer):
 
         # loop over the possible combinations of state path letters
         for k in self._markov_model.state_alphabet:
-            for l in self._markov_model.transitions_from(k):
+            for l in self._markov_model.transitions_from(k):  # noqa: E741
                 estimated_counts = 0
                 # now loop over the entire training sequence
                 for i in range(len(training_seq.emissions) - 1):
@@ -299,7 +310,7 @@ class BaumWelchTrainer(AbstractTrainer):
                     )
 
                 # update the transition approximation
-                transition_counts[(k, l)] += float(estimated_counts) / training_seq_prob
+                transition_counts[(k, l)] += estimated_counts / training_seq_prob
 
         return transition_counts
 
@@ -341,7 +352,7 @@ class BaumWelchTrainer(AbstractTrainer):
                         expected_times += forward_vars[(k, i)] * backward_vars[(k, i)]
 
                 # add to E_{k}(b)
-                emission_counts[(k, b)] += float(expected_times) / training_seq_prob
+                emission_counts[(k, b)] += expected_times / training_seq_prob
 
         return emission_counts
 

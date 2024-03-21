@@ -10,7 +10,7 @@ import os
 import unittest
 
 try:
-    import numpy
+    import numpy as np
 except ImportError:
     from Bio import MissingPythonDependencyError
 
@@ -20,7 +20,7 @@ except ImportError:
 
 from Bio import Align, SeqIO
 from Bio.Seq import Seq, reverse_complement
-from Bio.SeqUtils import GC
+from Bio.SeqRecord import SeqRecord
 
 
 class TestAlignerProperties(unittest.TestCase):
@@ -241,15 +241,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-GAACT
-||--|
-GA--T
+target            0 GAACT 5
+                  0 ||--| 5
+query             0 GA--T 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 5]], [[0, 2], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 5]], [[0, 2], [2, 3]]])
             )
         )
         alignment = alignments[1]
@@ -257,16 +257,16 @@ GA--T
         self.assertEqual(
             str(alignment),
             """\
-GAACT
-|-|-|
-G-A-T
+target            0 GAACT 5
+                  0 |-|-| 5
+query             0 G-A-T 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 1], [2, 3], [4, 5]], [[0, 1], [1, 2], [2, 3]]]),
+                np.array([[[0, 1], [2, 3], [4, 5]], [[0, 1], [1, 2], [2, 3]]]),
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -276,15 +276,15 @@ G-A-T
         self.assertEqual(
             str(alignment),
             """\
-GAACT
-||--|
-GA--T
+target            0 GAACT 5
+                  0 ||--| 5
+query             3 GA--T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 5]], [[3, 1], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 5]], [[3, 1], [1, 0]]])
             )
         )
         alignment = alignments[1]
@@ -292,16 +292,16 @@ GA--T
         self.assertEqual(
             str(alignment),
             """\
-GAACT
-|-|-|
-G-A-T
+target            0 GAACT 5
+                  0 |-|-| 5
+query             3 G-A-T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 1], [2, 3], [4, 5]], [[3, 2], [2, 1], [1, 0]]]),
+                np.array([[[0, 1], [2, 3], [4, 5]], [[3, 2], [2, 1], [1, 0]]]),
             )
         )
 
@@ -380,15 +380,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
- AwBw
- |-|
-zA-Bz
+target            0 AwB 3
+                  0 |-| 3
+query             1 A-B 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[1, 2], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[1, 2], [2, 3]]])
             )
         )
 
@@ -429,15 +429,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
- AwBw
- |-|
-zA-Bz
+target            0 AwB 3
+                  0 |-| 3
+query             1 A-B 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[1, 2], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[1, 2], [2, 3]]])
             )
         )
 
@@ -462,14 +462,14 @@ class TestUnknownCharacter(unittest.TestCase):
         self.assertEqual(
             str(alignment),
             """\
-GACT
-||.|
-GA?T
+target            0 GACT 4
+                  0 ||.| 4
+query             0 GA?T 4
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 4]], [[0, 4]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 4]], [[0, 4]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 1)
@@ -478,14 +478,14 @@ GA?T
         self.assertEqual(
             str(alignment),
             """\
-GACT
-||.|
-GA?T
+target            0 GACT 4
+                  0 ||.| 4
+query             4 GA?T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 4]], [[4, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 4]], [[4, 0]]]))
         )
         seq2 = "GAXT"
         aligner.wildcard = "X"
@@ -500,14 +500,14 @@ GA?T
         self.assertEqual(
             str(alignment),
             """\
-GACT
-||.|
-GAXT
+target            0 GACT 4
+                  0 ||.| 4
+query             0 GAXT 4
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 4]], [[0, 4]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 4]], [[0, 4]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 1)
@@ -516,14 +516,14 @@ GAXT
         self.assertEqual(
             str(alignment),
             """\
-GACT
-||.|
-GAXT
+target            0 GACT 4
+                  0 ||.| 4
+query             4 GAXT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 4]], [[4, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 4]], [[4, 0]]]))
         )
         aligner.wildcard = None
         score = aligner.score(seq1, seq2)
@@ -537,14 +537,14 @@ GAXT
         self.assertEqual(
             str(alignment),
             """\
-GACT
-||.|
-GAXT
+target            0 GACT 4
+                  0 ||.| 4
+query             0 GAXT 4
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 4]], [[0, 4]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 4]], [[0, 4]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 1)
@@ -553,14 +553,14 @@ GAXT
         self.assertEqual(
             str(alignment),
             """\
-GACT
-||.|
-GAXT
+target            0 GACT 4
+                  0 ||.| 4
+query             4 GAXT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 4]], [[4, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 4]], [[4, 0]]]))
         )
 
     def test_needlemanwunsch_simple2(self):
@@ -580,16 +580,16 @@ GAXT
         self.assertEqual(
             str(alignment),
             """\
-GA?A-T
-||-|-|
-GA-A?T
+target            0 GA?A-T 5
+                  0 ||-|-| 6
+query             0 GA-A?T 5
 """,
         )
         self.assertEqual(alignment.shape, (2, 6))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 2], [3, 4], [4, 5]], [[0, 2], [2, 3], [4, 5]]]),
+                np.array([[[0, 2], [3, 4], [4, 5]], [[0, 2], [2, 3], [4, 5]]]),
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -599,16 +599,16 @@ GA-A?T
         self.assertEqual(
             str(alignment),
             """\
-GA?A-T
-||-|-|
-GA-A?T
+target            0 GA?A-T 5
+                  0 ||-|-| 6
+query             5 GA-A?T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 6))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 2], [3, 4], [4, 5]], [[5, 3], [3, 2], [1, 0]]]),
+                np.array([[[0, 2], [3, 4], [4, 5]], [[5, 3], [3, 2], [1, 0]]]),
             )
         )
         seq1 = "GAXAT"
@@ -625,16 +625,16 @@ GA-A?T
         self.assertEqual(
             str(alignment),
             """\
-GAXA-T
-||-|-|
-GA-AXT
+target            0 GAXA-T 5
+                  0 ||-|-| 6
+query             0 GA-AXT 5
 """,
         )
         self.assertEqual(alignment.shape, (2, 6))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 2], [3, 4], [4, 5]], [[0, 2], [2, 3], [4, 5]]]),
+                np.array([[[0, 2], [3, 4], [4, 5]], [[0, 2], [2, 3], [4, 5]]]),
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -644,16 +644,16 @@ GA-AXT
         self.assertEqual(
             str(alignment),
             """\
-GAXA-T
-||-|-|
-GA-AXT
+target            0 GAXA-T 5
+                  0 ||-|-| 6
+query             5 GA-AXT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 6))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 2], [3, 4], [4, 5]], [[5, 3], [3, 2], [1, 0]]]),
+                np.array([[[0, 2], [3, 4], [4, 5]], [[5, 3], [3, 2], [1, 0]]]),
             )
         )
 
@@ -702,28 +702,28 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-AA
--|
--A
+target            0 AA 2
+                  0 -| 2
+query             0 -A 1
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[1, 2]], [[0, 1]]]))
+            np.array_equal(alignment.aligned, np.array([[[1, 2]], [[0, 1]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 1.9)
         self.assertEqual(
             str(alignment),
             """\
-AA
-|-
-A-
+target            0 AA 2
+                  0 |- 2
+query             0 A- 1
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 1]], [[0, 1]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 1]], [[0, 1]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 2)
@@ -732,28 +732,28 @@ A-
         self.assertEqual(
             str(alignment),
             """\
-AA
--|
--A
+target            0 AA 2
+                  0 -| 2
+query             1 -A 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[1, 2]], [[1, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[1, 2]], [[1, 0]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 1.9)
         self.assertEqual(
             str(alignment),
             """\
-AA
-|-
-A-
+target            0 AA 2
+                  0 |- 2
+query             1 A- 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 1]], [[1, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 1]], [[1, 0]]]))
         )
 
     def test_match_score_open_penalty2(self):
@@ -799,15 +799,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-GAA
-|-|
-G-A
+target            0 GAA 3
+                  0 |-| 3
+query             0 G-A 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[0, 1], [1, 2]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[0, 1], [1, 2]]])
             )
         )
         alignment = alignments[1]
@@ -815,14 +815,14 @@ G-A
         self.assertEqual(
             str(alignment),
             """\
-GAA
-||-
-GA-
+target            0 GAA 3
+                  0 ||- 3
+query             0 GA- 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 2]], [[0, 2]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 2]], [[0, 2]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 2)
@@ -831,15 +831,15 @@ GA-
         self.assertEqual(
             str(alignment),
             """\
-GAA
-|-|
-G-A
+target            0 GAA 3
+                  0 |-| 3
+query             2 G-A 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[2, 1], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[2, 1], [1, 0]]])
             )
         )
         alignment = alignments[1]
@@ -847,14 +847,14 @@ G-A
         self.assertEqual(
             str(alignment),
             """\
-GAA
-||-
-GA-
+target            0 GAA 3
+                  0 ||- 3
+query             2 GA- 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 2]], [[2, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 2]], [[2, 0]]]))
         )
 
     def test_match_score_open_penalty3(self):
@@ -898,15 +898,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-GAACT
-||--|
-GA--T
+target            0 GAACT 5
+                  0 ||--| 5
+query             0 GA--T 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 5]], [[0, 2], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 5]], [[0, 2], [2, 3]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -916,15 +916,15 @@ GA--T
         self.assertEqual(
             str(alignment),
             """\
-GAACT
-||--|
-GA--T
+target            0 GAACT 5
+                  0 ||--| 5
+query             3 GA--T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 5]], [[3, 1], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 5]], [[3, 1], [1, 0]]])
             )
         )
 
@@ -970,15 +970,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-G-CT-
-|--|-
-GA-TA
+target            0 G-CT- 3
+                  0 |--|- 5
+query             0 GA-TA 4
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[0, 1], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[0, 1], [2, 3]]])
             )
         )
         alignment = alignments[1]
@@ -986,15 +986,15 @@ GA-TA
         self.assertEqual(
             str(alignment),
             """\
-GC-T-
-|--|-
-G-ATA
+target            0 GC-T- 3
+                  0 |--|- 5
+query             0 G-ATA 4
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[0, 1], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[0, 1], [2, 3]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -1004,15 +1004,15 @@ G-ATA
         self.assertEqual(
             str(alignment),
             """\
-G-CT-
-|--|-
-GA-TA
+target            0 G-CT- 3
+                  0 |--|- 5
+query             4 GA-TA 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[4, 3], [2, 1]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[4, 3], [2, 1]]])
             )
         )
         alignment = alignments[1]
@@ -1020,15 +1020,15 @@ GA-TA
         self.assertEqual(
             str(alignment),
             """\
-GC-T-
-|--|-
-G-ATA
+target            0 GC-T- 3
+                  0 |--|- 5
+query             4 G-ATA 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[4, 3], [2, 1]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[4, 3], [2, 1]]])
             )
         )
 
@@ -1075,15 +1075,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-GACT
-|--|
-G--T
+target            0 GACT 4
+                  0 |--| 4
+query             0 G--T 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [3, 4]], [[0, 1], [1, 2]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [3, 4]], [[0, 1], [1, 2]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -1093,15 +1093,15 @@ G--T
         self.assertEqual(
             str(alignment),
             """\
-GACT
-|--|
-G--T
+target            0 GACT 4
+                  0 |--| 4
+query             2 G--T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [3, 4]], [[2, 1], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [3, 4]], [[2, 1], [1, 0]]])
             )
         )
 
@@ -1146,15 +1146,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-GACT
--.-|
--G-T
+target            0 GACT 4
+                  0 -.-| 4
+query             0 -G-T 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[1, 2], [3, 4]], [[0, 1], [1, 2]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[1, 2], [3, 4]], [[0, 1], [1, 2]]])
             )
         )
         alignment = alignments[1]
@@ -1162,15 +1162,15 @@ GACT
         self.assertEqual(
             str(alignment),
             """\
-GACT
-|-.-
-G-T-
+target            0 GACT 4
+                  0 |-.- 4
+query             0 G-T- 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[0, 1], [1, 2]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[0, 1], [1, 2]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -1180,15 +1180,15 @@ G-T-
         self.assertEqual(
             str(alignment),
             """\
-GACT
--.-|
--G-T
+target            0 GACT 4
+                  0 -.-| 4
+query             2 -G-T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[1, 2], [3, 4]], [[2, 1], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[1, 2], [3, 4]], [[2, 1], [1, 0]]])
             )
         )
         alignment = alignments[1]
@@ -1196,15 +1196,15 @@ GACT
         self.assertEqual(
             str(alignment),
             """\
-GACT
-|-.-
-G-T-
+target            0 GACT 4
+                  0 |-.- 4
+query             2 G-T- 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[2, 1], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[2, 1], [1, 0]]])
             )
         )
 
@@ -1251,15 +1251,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-GACT
-|--|
-G--T
+target            0 GACT 4
+                  0 |--| 4
+query             0 G--T 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [3, 4]], [[0, 1], [1, 2]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [3, 4]], [[0, 1], [1, 2]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -1269,15 +1269,15 @@ G--T
         self.assertEqual(
             str(alignment),
             """\
-GACT
-|--|
-G--T
+target            0 GACT 4
+                  0 |--| 4
+query             2 G--T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [3, 4]], [[2, 1], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [3, 4]], [[2, 1], [1, 0]]])
             )
         )
 
@@ -1327,29 +1327,29 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-GACT
---.|
---GT
+target            0 GACT 4
+                  0 --.| 4
+query             0 --GT 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[2, 4]], [[0, 2]]]))
+            np.array_equal(alignment.aligned, np.array([[[2, 4]], [[0, 2]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 1.0)
         self.assertEqual(
             str(alignment),
             """\
-GACT
-|--|
-G--T
+target            0 GACT 4
+                  0 |--| 4
+query             0 G--T 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [3, 4]], [[0, 1], [1, 2]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [3, 4]], [[0, 1], [1, 2]]])
             )
         )
         alignment = alignments[2]
@@ -1357,14 +1357,14 @@ G--T
         self.assertEqual(
             str(alignment),
             """\
-GACT
-|.--
-GT--
+target            0 GACT 4
+                  0 |.-- 4
+query             0 GT-- 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 2]], [[0, 2]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 2]], [[0, 2]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 3)
@@ -1373,29 +1373,29 @@ GT--
         self.assertEqual(
             str(alignment),
             """\
-GACT
---.|
---GT
+target            0 GACT 4
+                  0 --.| 4
+query             2 --GT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[2, 4]], [[2, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[2, 4]], [[2, 0]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 1.0)
         self.assertEqual(
             str(alignment),
             """\
-GACT
-|--|
-G--T
+target            0 GACT 4
+                  0 |--| 4
+query             2 G--T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [3, 4]], [[2, 1], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [3, 4]], [[2, 1], [1, 0]]])
             )
         )
         alignment = alignments[2]
@@ -1403,14 +1403,14 @@ G--T
         self.assertEqual(
             str(alignment),
             """\
-GACT
-|.--
-GT--
+target            0 GACT 4
+                  0 |.-- 4
+query             2 GT-- 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 2]], [[2, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 2]], [[2, 0]]]))
         )
 
 
@@ -1464,15 +1464,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-G-AT
-|-.|
-GTCT
+target            0 G-AT 3
+                  0 |-.| 4
+query             0 GTCT 4
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [1, 3]], [[0, 1], [2, 4]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [1, 3]], [[0, 1], [2, 4]]])
             )
         )
         alignment = alignments[1]
@@ -1480,15 +1480,15 @@ GTCT
         self.assertEqual(
             str(alignment),
             """\
-GA-T
-|.-|
-GTCT
+target            0 GA-T 3
+                  0 |.-| 4
+query             0 GTCT 4
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [2, 3]], [[0, 2], [3, 4]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [2, 3]], [[0, 2], [3, 4]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -1498,15 +1498,15 @@ GTCT
         self.assertEqual(
             str(alignment),
             """\
-G-AT
-|-.|
-GTCT
+target            0 G-AT 3
+                  0 |-.| 4
+query             4 GTCT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [1, 3]], [[4, 3], [2, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [1, 3]], [[4, 3], [2, 0]]])
             )
         )
         alignment = alignments[1]
@@ -1514,15 +1514,15 @@ GTCT
         self.assertEqual(
             str(alignment),
             """\
-GA-T
-|.-|
-GTCT
+target            0 GA-T 3
+                  0 |.-| 4
+query             4 GTCT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [2, 3]], [[4, 2], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [2, 3]], [[4, 2], [1, 0]]])
             )
         )
 
@@ -1569,15 +1569,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-GAT
-|-|
-G-TCT
+target            0 GAT 3
+                  0 |-| 3
+query             0 G-T 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[0, 1], [1, 2]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[0, 1], [1, 2]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -1587,15 +1587,15 @@ G-TCT
         self.assertEqual(
             str(alignment),
             """\
-GAT
-|-|
-G-TCT
+target            0 GAT 3
+                  0 |-| 3
+query             4 G-T 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[4, 3], [3, 2]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[4, 3], [3, 2]]])
             )
         )
 
@@ -1648,15 +1648,15 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-G-AAT
-|-..|
-GTCCT
+target            0 G-AAT 4
+                  0 |-..| 5
+query             0 GTCCT 5
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [1, 4]], [[0, 1], [2, 5]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [1, 4]], [[0, 1], [2, 5]]])
             )
         )
         alignment = alignments[1]
@@ -1664,15 +1664,15 @@ GTCCT
         self.assertEqual(
             str(alignment),
             """\
-GA-AT
-|.-.|
-GTCCT
+target            0 GA-AT 4
+                  0 |.-.| 5
+query             0 GTCCT 5
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [2, 4]], [[0, 2], [3, 5]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [2, 4]], [[0, 2], [3, 5]]])
             )
         )
         alignment = alignments[2]
@@ -1680,15 +1680,15 @@ GTCCT
         self.assertEqual(
             str(alignment),
             """\
-GAA-T
-|..-|
-GTCCT
+target            0 GAA-T 4
+                  0 |..-| 5
+query             0 GTCCT 5
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 3], [3, 4]], [[0, 3], [4, 5]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 3], [3, 4]], [[0, 3], [4, 5]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -1698,15 +1698,15 @@ GTCCT
         self.assertEqual(
             str(alignment),
             """\
-G-AAT
-|-..|
-GTCCT
+target            0 G-AAT 4
+                  0 |-..| 5
+query             5 GTCCT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [1, 4]], [[5, 4], [3, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [1, 4]], [[5, 4], [3, 0]]])
             )
         )
         alignment = alignments[1]
@@ -1714,15 +1714,15 @@ GTCCT
         self.assertEqual(
             str(alignment),
             """\
-GA-AT
-|.-.|
-GTCCT
+target            0 GA-AT 4
+                  0 |.-.| 5
+query             5 GTCCT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [2, 4]], [[5, 3], [2, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [2, 4]], [[5, 3], [2, 0]]])
             )
         )
         alignment = alignments[2]
@@ -1730,21 +1730,20 @@ GTCCT
         self.assertEqual(
             str(alignment),
             """\
-GAA-T
-|..-|
-GTCCT
+target            0 GAA-T 4
+                  0 |..-| 5
+query             5 GTCCT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 3], [3, 4]], [[5, 2], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 3], [3, 4]], [[5, 2], [1, 0]]])
             )
         )
 
 
 class TestPairwiseMatchDictionary(unittest.TestCase):
-
     match_dict = {("A", "A"): 1.5, ("A", "T"): 0.5, ("T", "A"): 0.5, ("T", "T"): 1.0}
 
     def test_match_dictionary1(self):
@@ -1761,28 +1760,26 @@ class TestPairwiseMatchDictionary(unittest.TestCase):
         aligner.open_gap_score = -0.5
         aligner.extend_gap_score = 0.0
         self.assertEqual(aligner.algorithm, "Gotoh local alignment algorithm")
-        lines = str(aligner).splitlines()
-        self.assertEqual(len(lines), 15)
-        self.assertEqual(lines[0], "Pairwise sequence aligner with parameters")
-        line = lines[1]
-        prefix = "  substitution_matrix: <Array object at "
-        suffix = ">"
-        self.assertTrue(line.startswith(prefix))
-        self.assertTrue(line.endswith(suffix))
-        address = int(line[len(prefix) : -len(suffix)], 16)
-        self.assertEqual(lines[2], "  target_internal_open_gap_score: -0.500000")
-        self.assertEqual(lines[3], "  target_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[4], "  target_left_open_gap_score: -0.500000")
-        self.assertEqual(lines[5], "  target_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[6], "  target_right_open_gap_score: -0.500000")
-        self.assertEqual(lines[7], "  target_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[8], "  query_internal_open_gap_score: -0.500000")
-        self.assertEqual(lines[9], "  query_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[10], "  query_left_open_gap_score: -0.500000")
-        self.assertEqual(lines[11], "  query_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[12], "  query_right_open_gap_score: -0.500000")
-        self.assertEqual(lines[13], "  query_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[14], "  mode: local")
+        self.assertRegex(
+            str(aligner),
+            """\
+^Pairwise sequence aligner with parameters
+  substitution_matrix: <Array object at .*>
+  target_internal_open_gap_score: -0.500000
+  target_internal_extend_gap_score: 0.000000
+  target_left_open_gap_score: -0.500000
+  target_left_extend_gap_score: 0.000000
+  target_right_open_gap_score: -0.500000
+  target_right_extend_gap_score: 0.000000
+  query_internal_open_gap_score: -0.500000
+  query_internal_extend_gap_score: 0.000000
+  query_left_open_gap_score: -0.500000
+  query_left_extend_gap_score: 0.000000
+  query_right_open_gap_score: -0.500000
+  query_right_extend_gap_score: 0.000000
+  mode: local
+$""",
+        )
         score = aligner.score(seq1, seq2)
         self.assertAlmostEqual(score, 3.0)
         score = aligner.score(seq1, reverse_complement(seq2), strand="-")
@@ -1794,29 +1791,29 @@ class TestPairwiseMatchDictionary(unittest.TestCase):
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||.
-ATT
+target            0 ATA 3
+                  0 ||. 3
+query             0 ATT 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[0, 3]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[0, 3]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 3.0)
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||-|
-AT-T
+target            0 ATAT 4
+                  0 ||-| 4
+query             0 AT-T 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [3, 4]], [[0, 2], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [3, 4]], [[0, 2], [2, 3]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -1826,29 +1823,29 @@ AT-T
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||.
-ATT
+target            0 ATA 3
+                  0 ||. 3
+query             3 ATT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[3, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[3, 0]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 3.0)
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||-|
-AT-T
+target            0 ATAT 4
+                  0 ||-| 4
+query             3 AT-T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [3, 4]], [[3, 1], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [3, 4]], [[3, 1], [1, 0]]])
             )
         )
 
@@ -1865,28 +1862,26 @@ AT-T
         aligner.substitution_matrix = substitution_matrix
         aligner.open_gap_score = -1.0
         aligner.extend_gap_score = 0.0
-        lines = str(aligner).splitlines()
-        self.assertEqual(len(lines), 15)
-        self.assertEqual(lines[0], "Pairwise sequence aligner with parameters")
-        line = lines[1]
-        prefix = "  substitution_matrix: <Array object at "
-        suffix = ">"
-        self.assertTrue(line.startswith(prefix))
-        self.assertTrue(line.endswith(suffix))
-        address = int(line[len(prefix) : -len(suffix)], 16)
-        self.assertEqual(lines[2], "  target_internal_open_gap_score: -1.000000")
-        self.assertEqual(lines[3], "  target_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[4], "  target_left_open_gap_score: -1.000000")
-        self.assertEqual(lines[5], "  target_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[6], "  target_right_open_gap_score: -1.000000")
-        self.assertEqual(lines[7], "  target_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[8], "  query_internal_open_gap_score: -1.000000")
-        self.assertEqual(lines[9], "  query_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[10], "  query_left_open_gap_score: -1.000000")
-        self.assertEqual(lines[11], "  query_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[12], "  query_right_open_gap_score: -1.000000")
-        self.assertEqual(lines[13], "  query_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[14], "  mode: local")
+        self.assertRegex(
+            str(aligner),
+            """\
+^Pairwise sequence aligner with parameters
+  substitution_matrix: <Array object at .*>
+  target_internal_open_gap_score: -1.000000
+  target_internal_extend_gap_score: 0.000000
+  target_left_open_gap_score: -1.000000
+  target_left_extend_gap_score: 0.000000
+  target_right_open_gap_score: -1.000000
+  target_right_extend_gap_score: 0.000000
+  query_internal_open_gap_score: -1.000000
+  query_internal_extend_gap_score: 0.000000
+  query_left_open_gap_score: -1.000000
+  query_left_extend_gap_score: 0.000000
+  query_right_open_gap_score: -1.000000
+  query_right_extend_gap_score: 0.000000
+  mode: local
+$""",
+        )
         score = aligner.score(seq1, seq2)
         self.assertAlmostEqual(score, 3.0)
         score = aligner.score(seq1, reverse_complement(seq2), strand="-")
@@ -1898,14 +1893,14 @@ AT-T
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||.
-ATT
+target            0 ATA 3
+                  0 ||. 3
+query             0 ATT 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[0, 3]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[0, 3]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 1)
@@ -1914,14 +1909,14 @@ ATT
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||.
-ATT
+target            0 ATA 3
+                  0 ||. 3
+query             3 ATT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[3, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[3, 0]]]))
         )
 
     def test_match_dictionary3(self):
@@ -1937,28 +1932,26 @@ ATT
         aligner.substitution_matrix = substitution_matrix
         aligner.open_gap_score = -1.0
         aligner.extend_gap_score = 0.0
-        lines = str(aligner).splitlines()
-        self.assertEqual(len(lines), 15)
-        self.assertEqual(lines[0], "Pairwise sequence aligner with parameters")
-        line = lines[1]
-        prefix = "  substitution_matrix: <Array object at "
-        suffix = ">"
-        self.assertTrue(line.startswith(prefix))
-        self.assertTrue(line.endswith(suffix))
-        address = int(line[len(prefix) : -len(suffix)], 16)
-        self.assertEqual(lines[2], "  target_internal_open_gap_score: -1.000000")
-        self.assertEqual(lines[3], "  target_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[4], "  target_left_open_gap_score: -1.000000")
-        self.assertEqual(lines[5], "  target_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[6], "  target_right_open_gap_score: -1.000000")
-        self.assertEqual(lines[7], "  target_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[8], "  query_internal_open_gap_score: -1.000000")
-        self.assertEqual(lines[9], "  query_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[10], "  query_left_open_gap_score: -1.000000")
-        self.assertEqual(lines[11], "  query_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[12], "  query_right_open_gap_score: -1.000000")
-        self.assertEqual(lines[13], "  query_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[14], "  mode: local")
+        self.assertRegex(
+            str(aligner),
+            """\
+^Pairwise sequence aligner with parameters
+  substitution_matrix: <Array object at .*>
+  target_internal_open_gap_score: -1.000000
+  target_internal_extend_gap_score: 0.000000
+  target_left_open_gap_score: -1.000000
+  target_left_extend_gap_score: 0.000000
+  target_right_open_gap_score: -1.000000
+  target_right_extend_gap_score: 0.000000
+  query_internal_open_gap_score: -1.000000
+  query_internal_extend_gap_score: 0.000000
+  query_left_open_gap_score: -1.000000
+  query_left_extend_gap_score: 0.000000
+  query_right_open_gap_score: -1.000000
+  query_right_extend_gap_score: 0.000000
+  mode: local
+$""",
+        )
         score = aligner.score(seq1, seq2)
         self.assertAlmostEqual(score, 3.0)
         score = aligner.score(seq1, reverse_complement(seq2), strand="-")
@@ -1970,14 +1963,14 @@ ATT
         self.assertEqual(
             str(alignment),
             """\
-ATT
-||.
-ATAT
+target            0 ATT 3
+                  0 ||. 3
+query             0 ATA 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[0, 3]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[0, 3]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 1)
@@ -1986,14 +1979,14 @@ ATAT
         self.assertEqual(
             str(alignment),
             """\
-ATT
-||.
-ATAT
+target            0 ATT 3
+                  0 ||. 3
+query             4 ATA 1
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[4, 1]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[4, 1]]]))
         )
 
     def test_match_dictionary4(self):
@@ -2012,28 +2005,26 @@ ATAT
         aligner.open_gap_score = -0.5
         aligner.extend_gap_score = 0.0
         self.assertEqual(aligner.algorithm, "Gotoh local alignment algorithm")
-        lines = str(aligner).splitlines()
-        self.assertEqual(len(lines), 15)
-        self.assertEqual(lines[0], "Pairwise sequence aligner with parameters")
-        line = lines[1]
-        prefix = "  substitution_matrix: <Array object at "
-        suffix = ">"
-        self.assertTrue(line.startswith(prefix))
-        self.assertTrue(line.endswith(suffix))
-        address = int(line[len(prefix) : -len(suffix)], 16)
-        self.assertEqual(lines[2], "  target_internal_open_gap_score: -0.500000")
-        self.assertEqual(lines[3], "  target_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[4], "  target_left_open_gap_score: -0.500000")
-        self.assertEqual(lines[5], "  target_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[6], "  target_right_open_gap_score: -0.500000")
-        self.assertEqual(lines[7], "  target_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[8], "  query_internal_open_gap_score: -0.500000")
-        self.assertEqual(lines[9], "  query_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[10], "  query_left_open_gap_score: -0.500000")
-        self.assertEqual(lines[11], "  query_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[12], "  query_right_open_gap_score: -0.500000")
-        self.assertEqual(lines[13], "  query_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[14], "  mode: local")
+        self.assertRegex(
+            str(aligner),
+            """\
+^Pairwise sequence aligner with parameters
+  substitution_matrix: <Array object at .*>
+  target_internal_open_gap_score: -0.500000
+  target_internal_extend_gap_score: 0.000000
+  target_left_open_gap_score: -0.500000
+  target_left_extend_gap_score: 0.000000
+  target_right_open_gap_score: -0.500000
+  target_right_extend_gap_score: 0.000000
+  query_internal_open_gap_score: -0.500000
+  query_internal_extend_gap_score: 0.000000
+  query_left_open_gap_score: -0.500000
+  query_left_extend_gap_score: 0.000000
+  query_right_open_gap_score: -0.500000
+  query_right_extend_gap_score: 0.000000
+  mode: local
+$""",
+        )
         score = aligner.score(seq1, seq2)
         self.assertAlmostEqual(score, 3.0)
         score = aligner.score(seq1, reverse_complement(seq2), strand="-")
@@ -2045,29 +2036,29 @@ ATAT
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||.
-ATT
+target            0 ATA 3
+                  0 ||. 3
+query             0 ATT 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[0, 3]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[0, 3]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 3.0)
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||-|
-AT-T
+target            0 ATAT 4
+                  0 ||-| 4
+query             0 AT-T 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [3, 4]], [[0, 2], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [3, 4]], [[0, 2], [2, 3]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -2077,29 +2068,29 @@ AT-T
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||.
-ATT
+target            0 ATA 3
+                  0 ||. 3
+query             3 ATT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[3, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[3, 0]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 3.0)
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||-|
-AT-T
+target            0 ATAT 4
+                  0 ||-| 4
+query             3 AT-T 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 4))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [3, 4]], [[3, 1], [1, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [3, 4]], [[3, 1], [1, 0]]])
             )
         )
 
@@ -2118,28 +2109,26 @@ AT-T
         aligner.substitution_matrix = substitution_matrix
         aligner.open_gap_score = -1.0
         aligner.extend_gap_score = 0.0
-        lines = str(aligner).splitlines()
-        self.assertEqual(len(lines), 15)
-        self.assertEqual(lines[0], "Pairwise sequence aligner with parameters")
-        line = lines[1]
-        prefix = "  substitution_matrix: <Array object at "
-        suffix = ">"
-        self.assertTrue(line.startswith(prefix))
-        self.assertTrue(line.endswith(suffix))
-        address = int(line[len(prefix) : -len(suffix)], 16)
-        self.assertEqual(lines[2], "  target_internal_open_gap_score: -1.000000")
-        self.assertEqual(lines[3], "  target_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[4], "  target_left_open_gap_score: -1.000000")
-        self.assertEqual(lines[5], "  target_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[6], "  target_right_open_gap_score: -1.000000")
-        self.assertEqual(lines[7], "  target_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[8], "  query_internal_open_gap_score: -1.000000")
-        self.assertEqual(lines[9], "  query_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[10], "  query_left_open_gap_score: -1.000000")
-        self.assertEqual(lines[11], "  query_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[12], "  query_right_open_gap_score: -1.000000")
-        self.assertEqual(lines[13], "  query_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[14], "  mode: local")
+        self.assertRegex(
+            str(aligner),
+            """\
+^Pairwise sequence aligner with parameters
+  substitution_matrix: <Array object at .*
+  target_internal_open_gap_score: -1.000000
+  target_internal_extend_gap_score: 0.000000
+  target_left_open_gap_score: -1.000000
+  target_left_extend_gap_score: 0.000000
+  target_right_open_gap_score: -1.000000
+  target_right_extend_gap_score: 0.000000
+  query_internal_open_gap_score: -1.000000
+  query_internal_extend_gap_score: 0.000000
+  query_left_open_gap_score: -1.000000
+  query_left_extend_gap_score: 0.000000
+  query_right_open_gap_score: -1.000000
+  query_right_extend_gap_score: 0.000000
+  mode: local
+$""",
+        )
         score = aligner.score(seq1, seq2)
         self.assertAlmostEqual(score, 3.0)
         score = aligner.score(seq1, reverse_complement(seq2), strand="-")
@@ -2151,14 +2140,14 @@ AT-T
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||.
-ATT
+target            0 ATA 3
+                  0 ||. 3
+query             0 ATT 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[0, 3]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[0, 3]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 1)
@@ -2167,14 +2156,14 @@ ATT
         self.assertEqual(
             str(alignment),
             """\
-ATAT
-||.
-ATT
+target            0 ATA 3
+                  0 ||. 3
+query             3 ATT 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[3, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[3, 0]]]))
         )
 
     def test_match_dictionary6(self):
@@ -2192,28 +2181,26 @@ ATT
         aligner.substitution_matrix = substitution_matrix
         aligner.open_gap_score = -1.0
         aligner.extend_gap_score = 0.0
-        lines = str(aligner).splitlines()
-        self.assertEqual(len(lines), 15)
-        self.assertEqual(lines[0], "Pairwise sequence aligner with parameters")
-        line = lines[1]
-        prefix = "  substitution_matrix: <Array object at "
-        suffix = ">"
-        self.assertTrue(line.startswith(prefix))
-        self.assertTrue(line.endswith(suffix))
-        address = int(line[len(prefix) : -len(suffix)], 16)
-        self.assertEqual(lines[2], "  target_internal_open_gap_score: -1.000000")
-        self.assertEqual(lines[3], "  target_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[4], "  target_left_open_gap_score: -1.000000")
-        self.assertEqual(lines[5], "  target_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[6], "  target_right_open_gap_score: -1.000000")
-        self.assertEqual(lines[7], "  target_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[8], "  query_internal_open_gap_score: -1.000000")
-        self.assertEqual(lines[9], "  query_internal_extend_gap_score: 0.000000")
-        self.assertEqual(lines[10], "  query_left_open_gap_score: -1.000000")
-        self.assertEqual(lines[11], "  query_left_extend_gap_score: 0.000000")
-        self.assertEqual(lines[12], "  query_right_open_gap_score: -1.000000")
-        self.assertEqual(lines[13], "  query_right_extend_gap_score: 0.000000")
-        self.assertEqual(lines[14], "  mode: local")
+        self.assertRegex(
+            str(aligner),
+            """\
+^Pairwise sequence aligner with parameters
+  substitution_matrix: <Array object at .*>
+  target_internal_open_gap_score: -1.000000
+  target_internal_extend_gap_score: 0.000000
+  target_left_open_gap_score: -1.000000
+  target_left_extend_gap_score: 0.000000
+  target_right_open_gap_score: -1.000000
+  target_right_extend_gap_score: 0.000000
+  query_internal_open_gap_score: -1.000000
+  query_internal_extend_gap_score: 0.000000
+  query_left_open_gap_score: -1.000000
+  query_left_extend_gap_score: 0.000000
+  query_right_open_gap_score: -1.000000
+  query_right_extend_gap_score: 0.000000
+  mode: local
+$""",
+        )
         score = aligner.score(seq1, seq2)
         self.assertAlmostEqual(score, 3.0)
         score = aligner.score(seq1, reverse_complement(seq2), strand="-")
@@ -2225,14 +2212,14 @@ ATT
         self.assertEqual(
             str(alignment),
             """\
-ATT
-||.
-ATAT
+target            0 ATT 3
+                  0 ||. 3
+query             0 ATA 3
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[0, 3]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[0, 3]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 1)
@@ -2241,14 +2228,14 @@ ATAT
         self.assertEqual(
             str(alignment),
             """\
-ATT
-||.
-ATAT
+target            0 ATT 3
+                  0 ||. 3
+query             4 ATA 1
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 3]], [[4, 1]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 3]], [[4, 1]]]))
         )
 
 
@@ -2290,14 +2277,14 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-abcde
-  |
-  c
+target            2 c 3
+                  0 | 1
+query             0 c 1
 """,
         )
         self.assertEqual(alignment.shape, (2, 1))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[2, 3]], [[0, 1]]]))
+            np.array_equal(alignment.aligned, np.array([[[2, 3]], [[0, 1]]]))
         )
 
     def test_align_one_char2(self):
@@ -2337,28 +2324,28 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-abcce
-  |
-  c
+target            2 c 3
+                  0 | 1
+query             0 c 1
 """,
         )
         self.assertEqual(alignment.shape, (2, 1))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[2, 3]], [[0, 1]]]))
+            np.array_equal(alignment.aligned, np.array([[[2, 3]], [[0, 1]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 1)
         self.assertEqual(
             str(alignment),
             """\
-abcce
-   |
-   c
+target            3 c 4
+                  0 | 1
+query             0 c 1
 """,
         )
         self.assertEqual(alignment.shape, (2, 1))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[3, 4]], [[0, 1]]]))
+            np.array_equal(alignment.aligned, np.array([[[3, 4]], [[0, 1]]]))
         )
 
     def test_align_one_char3(self):
@@ -2400,14 +2387,14 @@ Pairwise sequence aligner with parameters
         self.assertEqual(
             str(alignment),
             """\
-abcde
---|--
---c--
+target            0 abcde 5
+                  0 --|-- 5
+query             0 --c-- 1
 """,
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[2, 3]], [[0, 1]]]))
+            np.array_equal(alignment.aligned, np.array([[[2, 3]], [[0, 1]]]))
         )
 
     def test_align_one_char_score3(self):
@@ -2496,16 +2483,16 @@ class TestPerSiteGapPenalties(unittest.TestCase):
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
---|||||||||||----------|||||||||||--
---AABBBAAAACC----------CCAAAABBBAA--
+target            0 AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA 36
+                  0 --|||||||||||----------|||||||||||-- 36
+query             0 --AABBBAAAACC----------CCAAAABBBAA-- 22
 """,
         )
         self.assertEqual(alignment.shape, (2, 36))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[2, 13], [23, 34]], [[0, 11], [11, 22]]]),
+                np.array([[[2, 13], [23, 34]], [[0, 11], [11, 22]]]),
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -2515,16 +2502,16 @@ AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
---|||||||||||----------|||||||||||--
---AABBBAAAACC----------CCAAAABBBAA--
+target            0 AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA 36
+                  0 --|||||||||||----------|||||||||||-- 36
+query            22 --AABBBAAAACC----------CCAAAABBBAA--  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 36))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[2, 13], [23, 34]], [[22, 11], [11, 0]]]),
+                np.array([[[2, 13], [23, 34]], [[22, 11], [11, 0]]]),
             )
         )
 
@@ -2580,15 +2567,15 @@ AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
---|||----------......|||||||||||||--
---AAB----------BBAAAACCCCAAAABBBAA--
+target            0 AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA 36
+                  0 --|||----------......|||||||||||||-- 36
+query             0 --AAB----------BBAAAACCCCAAAABBBAA-- 22
 """,
         )
         self.assertEqual(alignment.shape, (2, 36))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[2, 5], [15, 34]], [[0, 3], [3, 22]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[2, 5], [15, 34]], [[0, 3], [3, 22]]])
             )
         )
         alignment = alignments[1]
@@ -2596,15 +2583,15 @@ AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
-||.------------......|||||||||||||--
-AAB------------BBAAAACCCCAAAABBBAA--
+target            0 AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA 36
+                  0 ||.------------......|||||||||||||-- 36
+query             0 AAB------------BBAAAACCCCAAAABBBAA-- 22
 """,
         )
         self.assertEqual(alignment.shape, (2, 36))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 3], [15, 34]], [[0, 3], [3, 22]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 3], [15, 34]], [[0, 3], [3, 22]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -2614,15 +2601,15 @@ AAB------------BBAAAACCCCAAAABBBAA--
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
---|||||||||||||......------------.||
---AABBBAAAACCCCAAAABB------------BAA
+target            0 AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA 36
+                  0 --|||||||||||||......------------.|| 36
+query            22 --AABBBAAAACCCCAAAABB------------BAA  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 36))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[2, 21], [33, 36]], [[22, 3], [3, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[2, 21], [33, 36]], [[22, 3], [3, 0]]])
             )
         )
         alignment = alignments[1]
@@ -2630,15 +2617,15 @@ AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
---|||||||||||||......----------|||--
---AABBBAAAACCCCAAAABB----------BAA--
+target            0 AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA 36
+                  0 --|||||||||||||......----------|||-- 36
+query            22 --AABBBAAAACCCCAAAABB----------BAA--  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 36))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[2, 21], [31, 34]], [[22, 3], [3, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[2, 21], [31, 34]], [[22, 3], [3, 0]]])
             )
         )
 
@@ -2689,15 +2676,15 @@ AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
         self.assertEqual(
             str(alignment),
             """\
-TT-CC-AA
-||----||
-TTG--GAA
+target            0 TT-CC-AA 6
+                  0 ||----|| 8
+query             0 TTG--GAA 6
 """,
         )
         self.assertEqual(alignment.shape, (2, 8))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 6]], [[0, 2], [4, 6]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 6]], [[0, 2], [4, 6]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -2707,15 +2694,15 @@ TTG--GAA
         self.assertEqual(
             str(alignment),
             """\
-TT-CC-AA
-||----||
-TTG--GAA
+target            0 TT-CC-AA 6
+                  0 ||----|| 8
+query             6 TTG--GAA 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 8))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 6]], [[6, 4], [2, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 6]], [[6, 4], [2, 0]]])
             )
         )
         aligner.query_gap_score = gap_score
@@ -2741,16 +2728,16 @@ TTG--GAA
         self.assertEqual(
             str(alignment),
             """\
-TT-CCAA
-||-.-||
-TTGG-AA
+target            0 TT-CCAA 6
+                  0 ||-.-|| 7
+query             0 TTGG-AA 6
 """,
         )
         self.assertEqual(alignment.shape, (2, 7))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 2], [2, 3], [4, 6]], [[0, 2], [3, 4], [4, 6]]]),
+                np.array([[[0, 2], [2, 3], [4, 6]], [[0, 2], [3, 4], [4, 6]]]),
             )
         )
         alignment = alignments[1]
@@ -2758,15 +2745,15 @@ TTGG-AA
         self.assertEqual(
             str(alignment),
             """\
-TTC--CAA
-||----||
-TT-GG-AA
+target            0 TTC--CAA 6
+                  0 ||----|| 8
+query             0 TT-GG-AA 6
 """,
         )
         self.assertEqual(alignment.shape, (2, 8))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 6]], [[0, 2], [4, 6]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 6]], [[0, 2], [4, 6]]])
             )
         )
         alignment = alignments[2]
@@ -2774,16 +2761,16 @@ TT-GG-AA
         self.assertEqual(
             str(alignment),
             """\
-TTCC-AA
-||-.-||
-TT-GGAA
+target            0 TTCC-AA 6
+                  0 ||-.-|| 7
+query             0 TT-GGAA 6
 """,
         )
         self.assertEqual(alignment.shape, (2, 7))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 2], [3, 4], [4, 6]], [[0, 2], [2, 3], [4, 6]]]),
+                np.array([[[0, 2], [3, 4], [4, 6]], [[0, 2], [2, 3], [4, 6]]]),
             )
         )
         alignment = alignments[3]
@@ -2791,15 +2778,15 @@ TT-GGAA
         self.assertEqual(
             str(alignment),
             """\
-TT-CC-AA
-||----||
-TTG--GAA
+target            0 TT-CC-AA 6
+                  0 ||----|| 8
+query             0 TTG--GAA 6
 """,
         )
         self.assertEqual(alignment.shape, (2, 8))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 6]], [[0, 2], [4, 6]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 6]], [[0, 2], [4, 6]]])
             )
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
@@ -2809,16 +2796,16 @@ TTG--GAA
         self.assertEqual(
             str(alignment),
             """\
-TT-CCAA
-||-.-||
-TTGG-AA
+target            0 TT-CCAA 6
+                  0 ||-.-|| 7
+query             6 TTGG-AA 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 7))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 2], [2, 3], [4, 6]], [[6, 4], [3, 2], [2, 0]]]),
+                np.array([[[0, 2], [2, 3], [4, 6]], [[6, 4], [3, 2], [2, 0]]]),
             )
         )
         alignment = alignments[1]
@@ -2826,15 +2813,15 @@ TTGG-AA
         self.assertEqual(
             str(alignment),
             """\
-TTC--CAA
-||----||
-TT-GG-AA
+target            0 TTC--CAA 6
+                  0 ||----|| 8
+query             6 TT-GG-AA 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 8))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 6]], [[6, 4], [2, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 6]], [[6, 4], [2, 0]]])
             )
         )
         alignment = alignments[2]
@@ -2842,16 +2829,16 @@ TT-GG-AA
         self.assertEqual(
             str(alignment),
             """\
-TTCC-AA
-||-.-||
-TT-GGAA
+target            0 TTCC-AA 6
+                  0 ||-.-|| 7
+query             6 TT-GGAA 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 7))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 2], [3, 4], [4, 6]], [[6, 4], [4, 3], [2, 0]]]),
+                np.array([[[0, 2], [3, 4], [4, 6]], [[6, 4], [4, 3], [2, 0]]]),
             )
         )
         alignment = alignments[3]
@@ -2859,15 +2846,15 @@ TT-GGAA
         self.assertEqual(
             str(alignment),
             """\
-TT-CC-AA
-||----||
-TTG--GAA
+target            0 TT-CC-AA 6
+                  0 ||----|| 8
+query             6 TTG--GAA 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 8))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 6]], [[6, 4], [2, 0]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 6]], [[6, 4], [2, 0]]])
             )
         )
 
@@ -2918,28 +2905,28 @@ TTG--GAA
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
-  |||||||||||||
-  AABBBAAAACCCCAAAABBBAA
+target            2 AABBBAAAACCCC 15
+                  0 ||||||||||||| 13
+query             0 AABBBAAAACCCC 13
 """,
         )
         self.assertEqual(alignment.shape, (2, 13))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[2, 15]], [[0, 13]]]))
+            np.array_equal(alignment.aligned, np.array([[[2, 15]], [[0, 13]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 13)
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
-                     |||||||||||||
-            AABBBAAAACCCCAAAABBBAA
+target           21 CCCCAAAABBBAA 34
+                  0 ||||||||||||| 13
+query             9 CCCCAAAABBBAA 22
 """,
         )
         self.assertEqual(alignment.shape, (2, 13))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[21, 34]], [[9, 22]]]))
+            np.array_equal(alignment.aligned, np.array([[[21, 34]], [[9, 22]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 2)
@@ -2948,28 +2935,28 @@ AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
-  |||||||||||||
-  AABBBAAAACCCCAAAABBBAA
+target            2 AABBBAAAACCCC 15
+                  0 ||||||||||||| 13
+query            22 AABBBAAAACCCC  9
 """,
         )
         self.assertEqual(alignment.shape, (2, 13))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[2, 15]], [[22, 9]]]))
+            np.array_equal(alignment.aligned, np.array([[[2, 15]], [[22, 9]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 13)
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
-                     |||||||||||||
-            AABBBAAAACCCCAAAABBBAA
+target           21 CCCCAAAABBBAA 34
+                  0 ||||||||||||| 13
+query            13 CCCCAAAABBBAA  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 13))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[21, 34]], [[13, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[21, 34]], [[13, 0]]]))
         )
 
     def test_gap_here_only_local_2(self):
@@ -3024,28 +3011,28 @@ AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
-  |||||||||||||
-  AABBBAAAACCCCAAAABBBAA
+target            2 AABBBAAAACCCC 15
+                  0 ||||||||||||| 13
+query             0 AABBBAAAACCCC 13
 """,
         )
         self.assertEqual(alignment.shape, (2, 13))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[2, 15]], [[0, 13]]]))
+            np.array_equal(alignment.aligned, np.array([[[2, 15]], [[0, 13]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 13)
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
-                     |||||||||||||
-            AABBBAAAACCCCAAAABBBAA
+target           21 CCCCAAAABBBAA 34
+                  0 ||||||||||||| 13
+query             9 CCCCAAAABBBAA 22
 """,
         )
         self.assertEqual(alignment.shape, (2, 13))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[21, 34]], [[9, 22]]]))
+            np.array_equal(alignment.aligned, np.array([[[21, 34]], [[9, 22]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 2)
@@ -3054,28 +3041,28 @@ AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
-  |||||||||||||
-  AABBBAAAACCCCAAAABBBAA
+target            2 AABBBAAAACCCC 15
+                  0 ||||||||||||| 13
+query            22 AABBBAAAACCCC  9
 """,
         )
         self.assertEqual(alignment.shape, (2, 13))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[2, 15]], [[22, 9]]]))
+            np.array_equal(alignment.aligned, np.array([[[2, 15]], [[22, 9]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 13)
         self.assertEqual(
             str(alignment),
             """\
-AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
-                     |||||||||||||
-            AABBBAAAACCCCAAAABBBAA
+target           21 CCCCAAAABBBAA 34
+                  0 ||||||||||||| 13
+query            13 CCCCAAAABBBAA  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 13))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[21, 34]], [[13, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[21, 34]], [[13, 0]]]))
         )
 
     def test_gap_here_only_local_3(self):
@@ -3125,28 +3112,28 @@ AAAABBBAAAACCCCCCCCCCCCCCAAAABBBAAAA
         self.assertEqual(
             str(alignment),
             """\
-TTCCAA
-||
-TTGGAA
+target            0 TT 2
+                  0 || 2
+query             0 TT 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 2]], [[0, 2]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 2]], [[0, 2]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 2.0)
         self.assertEqual(
             str(alignment),
             """\
-TTCCAA
-    ||
-TTGGAA
+target            4 AA 6
+                  0 || 2
+query             4 AA 6
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[4, 6]], [[4, 6]]]))
+            np.array_equal(alignment.aligned, np.array([[[4, 6]], [[4, 6]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 2)
@@ -3155,28 +3142,28 @@ TTGGAA
         self.assertEqual(
             str(alignment),
             """\
-TTCCAA
-||
-TTGGAA
+target            0 TT 2
+                  0 || 2
+query             6 TT 4
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 2]], [[6, 4]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 2]], [[6, 4]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 2.0)
         self.assertEqual(
             str(alignment),
             """\
-TTCCAA
-    ||
-TTGGAA
+target            4 AA 6
+                  0 || 2
+query             2 AA 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[4, 6]], [[2, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[4, 6]], [[2, 0]]]))
         )
         aligner.query_gap_score = gap_score
         self.assertEqual(
@@ -3201,28 +3188,28 @@ TTGGAA
         self.assertEqual(
             str(alignment),
             """\
-TTCCAA
-||
-TTGGAA
+target            0 TT 2
+                  0 || 2
+query             0 TT 2
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 2]], [[0, 2]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 2]], [[0, 2]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 2.0)
         self.assertEqual(
             str(alignment),
             """\
-TTCCAA
-    ||
-TTGGAA
+target            4 AA 6
+                  0 || 2
+query             4 AA 6
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[4, 6]], [[4, 6]]]))
+            np.array_equal(alignment.aligned, np.array([[[4, 6]], [[4, 6]]]))
         )
         alignments = aligner.align(seq1, reverse_complement(seq2), strand="-")
         self.assertEqual(len(alignments), 2)
@@ -3231,28 +3218,28 @@ TTGGAA
         self.assertEqual(
             str(alignment),
             """\
-TTCCAA
-||
-TTGGAA
+target            0 TT 2
+                  0 || 2
+query             6 TT 4
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[0, 2]], [[6, 4]]]))
+            np.array_equal(alignment.aligned, np.array([[[0, 2]], [[6, 4]]]))
         )
         alignment = alignments[1]
         self.assertAlmostEqual(alignment.score, 2.0)
         self.assertEqual(
             str(alignment),
             """\
-TTCCAA
-    ||
-TTGGAA
+target            4 AA 6
+                  0 || 2
+query             2 AA 0
 """,
         )
         self.assertEqual(alignment.shape, (2, 2))
         self.assertTrue(
-            numpy.array_equal(alignment.aligned, numpy.array([[[4, 6]], [[2, 0]]]))
+            np.array_equal(alignment.aligned, np.array([[[4, 6]], [[2, 0]]]))
         )
 
     def test_broken_gap_function(self):
@@ -3314,14 +3301,11 @@ TTGGAA
             alignments = list(alignments)
 
 
-class TestSequencesAsLists(unittest.TestCase):
-    """Check aligning sequences provided as lists.
-
-    This tests whether we can align sequences that are provided as lists
-    consisting of three-letter codons or three-letter amino acids.
-    """
+class TestAlignerInput(unittest.TestCase):
+    """Check aligning sequences provided as lists, str, Seq, or SeqRecord objects."""
 
     def test_three_letter_amino_acids_global(self):
+        """Test aligning sequences provided as lists of three-letter amino acids."""
         seq1 = ["Gly", "Ala", "Thr"]
         seq2 = ["Gly", "Ala", "Ala", "Cys", "Thr"]
         aligner = Align.PairwiseAligner()
@@ -3361,24 +3345,68 @@ Gly Ala Ala Cys Thr
         self.assertAlmostEqual(score, 3.0)
         alignments = aligner.align(seq1, seq2)
         self.assertEqual(len(alignments), 2)
+        alignment = alignments[0]
         self.assertEqual(
-            str(alignments[0]),
+            str(alignment),
             """\
 Pro Pro Gly Ala --- --- Thr --- ---
 --- --- ||| ||| --- --- ||| --- ---
 --- --- Gly Ala Ala Cys Thr Asn Asn
 """,
         )
+        self.assertAlmostEqual(alignment.score, 3.0)
         self.assertEqual(
-            str(alignments[1]),
+            alignment[0], ["Pro", "Pro", "Gly", "Ala", None, None, "Thr", None, None]
+        )
+        self.assertEqual(
+            alignment[0, :], ["Pro", "Pro", "Gly", "Ala", None, None, "Thr", None, None]
+        )
+        self.assertEqual(
+            alignment[0, 1:], ["Pro", "Gly", "Ala", None, None, "Thr", None, None]
+        )
+        self.assertEqual(alignment[0, ::2], ["Pro", "Gly", None, "Thr", None])
+        self.assertEqual(
+            alignment[1], [None, None, "Gly", "Ala", "Ala", "Cys", "Thr", "Asn", "Asn"]
+        )
+        self.assertEqual(
+            alignment[1, :],
+            [None, None, "Gly", "Ala", "Ala", "Cys", "Thr", "Asn", "Asn"],
+        )
+        self.assertEqual(
+            alignment[1, 1:], [None, "Gly", "Ala", "Ala", "Cys", "Thr", "Asn", "Asn"]
+        )
+        self.assertEqual(alignment[1, ::2], [None, "Gly", "Ala", "Thr", "Asn"])
+        alignment = alignments[1]
+        self.assertEqual(
+            str(alignment),
             """\
 Pro Pro Gly --- Ala --- Thr --- ---
 --- --- ||| --- ||| --- ||| --- ---
 --- --- Gly Ala Ala Cys Thr Asn Asn
 """,
         )
-        self.assertAlmostEqual(alignments[0].score, 3.0)
-        self.assertAlmostEqual(alignments[1].score, 3.0)
+        self.assertAlmostEqual(alignment.score, 3.0)
+        self.assertEqual(
+            alignment[0], ["Pro", "Pro", "Gly", None, "Ala", None, "Thr", None, None]
+        )
+        self.assertEqual(
+            alignment[0, :], ["Pro", "Pro", "Gly", None, "Ala", None, "Thr", None, None]
+        )
+        self.assertEqual(
+            alignment[0, 1:-1], ["Pro", "Gly", None, "Ala", None, "Thr", None]
+        )
+        self.assertEqual(alignment[0, 1::2], ["Pro", None, None, None])
+        self.assertEqual(
+            alignment[1], [None, None, "Gly", "Ala", "Ala", "Cys", "Thr", "Asn", "Asn"]
+        )
+        self.assertEqual(
+            alignment[1, :],
+            [None, None, "Gly", "Ala", "Ala", "Cys", "Thr", "Asn", "Asn"],
+        )
+        self.assertEqual(
+            alignment[1, 1:-1], [None, "Gly", "Ala", "Ala", "Cys", "Thr", "Asn"]
+        )
+        self.assertEqual(alignment[1, 1::2], [None, "Ala", "Cys", "Asn"])
 
     def test_three_letter_amino_acids_local(self):
         seq1 = ["Asn", "Asn", "Gly", "Ala", "Thr", "Glu", "Glu"]
@@ -3395,30 +3423,122 @@ Pro Pro Gly --- Ala --- Thr --- ---
         self.assertAlmostEqual(score, 3.0)
         alignments = aligner.align(seq1, seq2)
         self.assertEqual(len(alignments), 2)
+        alignment = alignments[0]
         self.assertEqual(
-            str(alignments[0]),
+            str(alignment),
             """\
 Gly Ala --- --- Thr
 ||| ||| --- --- |||
 Gly Ala Ala Cys Thr
 """,
         )
+        self.assertAlmostEqual(alignment.score, 3.0)
+        self.assertEqual(alignment[0], ["Gly", "Ala", None, None, "Thr"])
+        self.assertEqual(alignment[0, :], ["Gly", "Ala", None, None, "Thr"])
+        self.assertEqual(alignment[0, 1:], ["Ala", None, None, "Thr"])
+        self.assertEqual(alignment[0, :-1], ["Gly", "Ala", None, None])
+        self.assertEqual(alignment[0, ::2], ["Gly", None, "Thr"])
+        self.assertEqual(alignment[1], ["Gly", "Ala", "Ala", "Cys", "Thr"])
+        self.assertEqual(alignment[1, :], ["Gly", "Ala", "Ala", "Cys", "Thr"])
+        self.assertEqual(alignment[1, 1:], ["Ala", "Ala", "Cys", "Thr"])
+        self.assertEqual(alignment[1, :-1], ["Gly", "Ala", "Ala", "Cys"])
+        self.assertEqual(alignment[1, ::2], ["Gly", "Ala", "Thr"])
+        alignment = alignments[1]
         self.assertEqual(
-            str(alignments[1]),
+            str(alignment),
             """\
 Gly --- Ala --- Thr
 ||| --- ||| --- |||
 Gly Ala Ala Cys Thr
 """,
         )
-        self.assertAlmostEqual(alignments[0].score, 3.0)
-        self.assertAlmostEqual(alignments[1].score, 3.0)
+        self.assertAlmostEqual(alignment.score, 3.0)
+        self.assertEqual(alignment[0], ["Gly", None, "Ala", None, "Thr"])
+        self.assertEqual(alignment[0, :], ["Gly", None, "Ala", None, "Thr"])
+        self.assertEqual(alignment[0, 1:], [None, "Ala", None, "Thr"])
+        self.assertEqual(alignment[0, :-1], ["Gly", None, "Ala", None])
+        self.assertEqual(alignment[0, ::2], ["Gly", "Ala", "Thr"])
+        self.assertEqual(alignment[1], ["Gly", "Ala", "Ala", "Cys", "Thr"])
+        self.assertEqual(alignment[1, :], ["Gly", "Ala", "Ala", "Cys", "Thr"])
+        self.assertEqual(alignment[1, 1:], ["Ala", "Ala", "Cys", "Thr"])
+        self.assertEqual(alignment[1, :-1], ["Gly", "Ala", "Ala", "Cys"])
+        self.assertEqual(alignment[1, ::2], ["Gly", "Ala", "Thr"])
+
+    def test_str_seq_seqrecord(self):
+        """Test aligning sequences provided as str, Seq, or SeqRecord objects."""
+        aligner = Align.PairwiseAligner("blastn")
+        t1 = "ACGT"
+        t2 = "CGTT"
+        s1 = Seq(t1)
+        s2 = Seq(t2)
+        r1 = SeqRecord(s1, id="first", description="1st sequence")
+        r2 = SeqRecord(s2, id="second", description="2nd sequence")
+        alignments = aligner.align(t1, t2)
+        self.assertEqual(len(alignments), 1)
+        alignment = alignments[0]
+        self.assertEqual(
+            str(alignment),
+            """\
+target            0 ACGT 4
+                  0 ...| 4
+query             0 CGTT 4
+""",
+        )
+        self.assertEqual(
+            format(alignment, "fasta"),
+            """\
+>
+ACGT
+>
+CGTT
+""",
+        )
+        alignments = aligner.align(s1, s2)
+        self.assertEqual(len(alignments), 1)
+        alignment = alignments[0]
+        self.assertEqual(
+            str(alignment),
+            """\
+target            0 ACGT 4
+                  0 ...| 4
+query             0 CGTT 4
+""",
+        )
+        self.assertEqual(
+            format(alignment, "fasta"),
+            """\
+>
+ACGT
+>
+CGTT
+""",
+        )
+        alignments = aligner.align(r1, r2)
+        self.assertEqual(len(alignments), 1)
+        alignment = alignments[0]
+        self.assertEqual(
+            str(alignment),
+            """\
+first             0 ACGT 4
+                  0 ...| 4
+second            0 CGTT 4
+""",
+        )
+        self.assertEqual(
+            format(alignment, "fasta"),
+            """\
+>first 1st sequence
+ACGT
+>second 2nd sequence
+CGTT
+""",
+        )
 
 
 class TestArgumentErrors(unittest.TestCase):
     def test_aligner_string_errors(self):
         aligner = Align.PairwiseAligner()
-        message = "^argument should support the sequence protocol$"
+        message = "^sequence has unexpected type int$"
         with self.assertRaisesRegex(TypeError, message):
             aligner.score("AAA", 3)
         message = "^sequence has zero length$"
@@ -3460,28 +3580,28 @@ class TestArgumentErrors(unittest.TestCase):
         score = aligner.score(s1, s2b)
         self.assertAlmostEqual(score, 4.0)
         try:
-            import numpy
+            import numpy as np
         except ImportError:
             return
         aligner = Align.PairwiseAligner()
         aligner.wildcard = chr(99)
         s1 = "GGG"
-        s2 = numpy.array([ord("G"), ord("A"), ord("G")], numpy.int32)
+        s2 = np.array([ord("G"), ord("A"), ord("G")], np.int32)
         score = aligner.score(s1, s2)
         self.assertAlmostEqual(score, 2.0)
-        s2 = numpy.array([1.0, 0.0, 1.0])
+        s2 = np.array([1.0, 0.0, 1.0])
         message = "^sequence has incorrect data type 'd'$"
         with self.assertRaisesRegex(ValueError, message):
             aligner.score(s1, s2)
-        s2 = numpy.zeros((3, 2), numpy.int32)
+        s2 = np.zeros((3, 2), np.int32)
         message = "^sequence has incorrect rank \\(2 expected 1\\)$"
         with self.assertRaisesRegex(ValueError, message):
             aligner.score(s1, s2)
-        s1 = numpy.array([1, 5, 6], numpy.int32)
-        s2 = numpy.array([1, 8, 6], numpy.int32)
-        s2a = numpy.array([1, 8, 99], numpy.int32)
-        s2b = numpy.array([1, 28, 6], numpy.int32)
-        s2c = numpy.array([1, 8, -6], numpy.int32)
+        s1 = np.array([1, 5, 6], np.int32)
+        s2 = np.array([1, 8, 6], np.int32)
+        s2a = np.array([1, 8, 99], np.int32)
+        s2b = np.array([1, 28, 6], np.int32)
+        s2c = np.array([1, 8, -6], np.int32)
         aligner.match = 3.0
         aligner.mismatch = -2.0
         aligner.gap_score = -10.0
@@ -3495,7 +3615,7 @@ class TestArgumentErrors(unittest.TestCase):
         self.assertAlmostEqual(score, 4.0)
         # when using a substitution matrix, all indices should be between 0
         # and the size of the substitution matrix:
-        m = 5 * numpy.eye(10)
+        m = 5 * np.eye(10)
         aligner.substitution_matrix = m
         score = aligner.score(s1, s2)  # no ValueError
         self.assertAlmostEqual(score, 10.0)
@@ -3534,9 +3654,129 @@ class TestOverflowError(unittest.TestCase):
         self.assertEqual(
             str(alignment),
             """\
-ATTTA-TC-GGA-GAGTTTGATCC-TGGCTCAGGAC--GAACGCTGGCGGC-GTGCCTAAT-ACATGCAAGTCGAG-CGG-A-CAG-AT-GGGA-GCTTGCT-C----CCTGAT-GTTAGC-GGCGGACGGGTGAGTAACAC-GT--GGGTAA-CCTGCCTGTAA-G-ACTGGG--ATAACT-CC-GGGAAACCGG--GGCTAATACCGG-ATGGTTGTTTGAACCGCAT-GGTTCAA-AC-ATAA-AAGGTGG--C-TTCGG-C-TACCACTTA-C-A--G-ATG-GACCC-GC--GGCGCATTAGCTAGTT-GGTGAGG-TAACGGCTCACC-AAGGCGACGATGCG--TAGCC-GA--CCTGAGAGGG-TGATC--GGCCACACTGGGA-CTGAGACACGG-CCCAGACTCCTACGGGAGGCAGCAGTAGGG-AATC-TTCCGCA-A-TGGA-CG-AAAGTC-TGAC-GG-AGCAAC--GCCGCGTG-AGTGAT-GAAGG--TTTTCGGA-TC-GTAAAGCT-CTGTTGTT-AG-GG--A--A-G--A--ACAAGTGCCGTTCGAATAGGGC----GG-TACC-TTGACGGT-ACCTAAC-CAGAA-A-GCCAC-GGCTAACTAC-GTGCCAGCAGCCGCGGTAATACGT-AGG-TGGCAAGCGTTG--TCCGGAATTA-TTGGGCGTAAAG-GGCT-CGCAGGCGGTTTC-TTAAGTCT-GATGTGAAAG-CCCCCGG-CTCAACC-GGGGAGGG--T-CAT-TGGA-AACTGGGG-AA-CTTGAGTGCA--G-AAGAGGAGAGTGG-A-A-TTCCACG-TGTAGCGGTGAAATGCGTAGAGATG-TGGAGGAAC-ACCAG-TGGCGAAGGCGA-CTCTC--TGGT-CTGTAA--CTGACGCTG-AGGA-GCGAAAGCGTGGGGAGCGAA-CAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGAGT-G-CTAAGTGTT-AGGGGGTT-TCCGCCCCTT-AGTGC-TG-C------AGCTAACGCA-TTAAG-C-ACTCCGCCTGGGGAGTACGGTC-GCAAGACTG--AAA-CTCAAA-GGAATTGACGGGGGCCCGCACAAGCGGTGGAGCATGTGGTTTAATTCGAA-GCAACGCGAAGAACCTTACCA-GGTCTTGACATCCTCTGACA-A--T--CCTAGAGATAGGAC--G-T-CCCCTTCGGGGGCAGA--GTGA--CAGGTGG-TGCATGG-TTGTCGTCAGCTCGTGTC-GTGAGA-TGTTGGGTTAAGTCCCGCAACGAGCGCAACCCTTGATCTTA--GTTGCCAGCA--TTCA-GTTG--GGC-A-CTCTAA-GGT-GACTGCC-GGTGAC-AAACC-GGAGGAAGGTGGGGATGACGTCAAA-TCATCATG-CCCCTTAT-GACCT-GGGCTACACACGTGCTACAATGGACAG-A-ACAAAG-GGCA-GCGAAACC--GCGAG-GTT-AAGCC--AATCC-CAC-AAA-T-CTGTTC-TCAGTTC-GGATC-GC-AGTCTGCAACTCGACTGCG--TGAAGCT-GGAATCGCTAGTAATCGC-GGATCAGCA-TGCCG-CGGTGAATACGTTCCCGGGCCTTGTACACACCGCCCGTCACACCAC-GAG-AGT---TTGT-AACACCC-GAAGTC-GGTGAGG-T-AACCTTTTA-GG-AG--C-C--AGCCG-CC---GAAGGTGGGA--CAGATGA-TTGGGGTGAAGTCGTAACAAGGTAG-CCGTATCGGAAGG----TGCGGCT-GGATCACCTCCTTTCTA
-|---|-|--|-|-||||||||||--||||||||-|---|||||||||||||-|-||||||--|||||||||||||--|||-|-|||-|--|--|-|||||||-|----|-|||--|--||--|||||||||||||||||----||--|||-||-|-||||||-|--|-|--|||--||||||-|--||-||||-||--|-|||||||||--||---------|||-|--|-|---|||-||-|-||-|-||-||--|-|||||-|-|-|---||--|-|--|-|||-|-|||-|---||-|-||||||||||--||||-||-||||||||||||-|-|||||||||-|---||||--|---|-|||||||--|||-|--|-|||||||||-|-|||||||||||-||-|||||||||||||||||||||||-|||-|||--||--|||-|-|||--||-||-|-|-|||--|--|||--|--||||||||-|-|||--|||||--||--|||--|--||||||-|-||-||----||-||--|--|-|--|--|-||||----|---||||---|----|--|-|--||||||-|-|||---|-|||||-|-||-||-||||||||-|-|||||||||||||||||||||||--|||-||-||||||||---||-|||||||-|-||||||||||-|-|--||||||||||||--|||||||--|||||||||--||||-||-|||||||-|||-|-----|-|||-||-|-|-||||---||-|||||||-|---|-|-||||-|-|-||-|-|-|||||-|-||||||||||||||||||||||||--||||||||--|||-|-|||||||||||--|-|-|--|||--|-|-||--||||||||--|||--|||||||||||||||||-||-|||||||||||||||||||||||||||||||||||||||--|-|-||---||---|||---||-|--||||-||-||-||-||-|------|||||||||--|||||-|-||-|-|||||||||||||||-|-|||||---|--|||-||||||-|-|||||||||||||||||||||||||||||||||||||||||||||||--||||||||||||||||||||--|||||||||||||----|||-|--|--||-||||||-|||---|-|-||--||||||---|-|--||||--||||||--|||||||-|-|||||||||||||||--||||-|-||||||||||||||||||||||||||||||||||-|||||---|||||||||---|-|--|--|--||--|-|||-||-||--|||||||-|-|||--||||--||||||||||||||||||||||||--||||||||-|||-|||--||||--|||||||||||||||||||||||-|-|-|-||||||-|--|-||||--||--|||||-|---||||---|--||-||--|||-|-|-||-|-|-|||-|-||||--|--||||||||||||||||-|---|||||-|-|||||||||||||||||--|||||||-|-||||--|||||||||||||||||||||||||||||||||||||||||||||--|-|-|||---|||--||-|----|||||--|||-||--|-||||||----||-||--|-|--|-||--|----|----||--|--||--|||-|-||||||||||||||||||||||--|||||--||--||----|||||-|-|||||||||||||---|
-A---AAT-TG-AAGAGTTTGATC-ATGGCTCAG-A-TTGAACGCTGGCGGCAG-GCCTAA-CACATGCAAGTCGA-ACGGTAACAGGA-AG--AAGCTTGCTTCTTTGC-TGA-CG--AG-TGGCGGACGGGTGAGTAA---TGTCTGGG-AAAC-TGCCTG-A-TGGA--GGGGGATAACTAC-TGG-AAAC-GGTAG-CTAATACCG-CAT---------AAC-G--TCG---CAAGACCA-AAGA-GG-GGGACCTTCGGGCCT-C---TT-GCCATCGGATGTG-CCCAG-ATGG-G-ATTAGCTAGT-AGGTG-GGGTAACGGCTCACCTA-GGCGACGAT-C-CCTAGC-TG-GTC-TGAGAGG-ATGA-CCAG-CCACACTGG-AACTGAGACACGGTCC-AGACTCCTACGGGAGGCAGCAGT-GGGGAAT-ATT--GCACAATGG-GCGCAA-G-CCTGA-TG-CAGC--CATGCCGCGTGTA-TGA-AGAAGGCCTT--CGG-GT-TGTAAAG-TACT-TT---CAGCGGGGAGGAAGGGAGTA-AAGT----T---AATA---CCTTTG-CT-C-ATTGACG-TTACC---CGCAGAAGAAGC-ACCGGCTAACT-CCGTGCCAGCAGCCGCGGTAATACG-GAGGGTG-CAAGCGTT-AATC-GGAATTACT-GGGCGTAAAGCG-C-ACGCAGGCGGTTT-GTTAAGTC-AGATGTGAAA-TCCCC-GGGCTCAACCTGGG-A---ACTGCATCTG-ATA-CTGG--CAAGCTTGAGT-C-TCGTA-GAGG-G-G-GGTAGAATTCCA-GGTGTAGCGGTGAAATGCGTAGAGAT-CTGGAGGAA-TACC-GGTGGCGAAGGCG-GC-C-CCCTGG-AC-G-AAGACTGACGCT-CAGG-TGCGAAAGCGTGGGGAGC-AAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATG--TCGACT---TG--GAGG---TTGT--GCCC-TTGAG-GCGTGGCTTCCGGAGCTAACGC-GTTAAGTCGAC-C-GCCTGGGGAGTACGG-CCGCAAG---GTTAAAACTCAAATG-AATTGACGGGGGCCCGCACAAGCGGTGGAGCATGTGGTTTAATTCGA-TGCAACGCGAAGAACCTTACC-TGGTCTTGACATCC----ACAGAACTTTCC-AGAGAT-GGA-TTGGTGCC--TTCGGG---A-ACTGTGAGACAGGTG-CTGCATGGCT-GTCGTCAGCTCGTGT-TGTGA-AATGTTGGGTTAAGTCCCGCAACGAGCGCAACCCTT-ATCTT-TTGTTGCCAGC-GGT-C-CG--GCCGG-GAACTC-AAAGG-AGACTGCCAG-TGA-TAAAC-TGGAGGAAGGTGGGGATGACGTCAA-GTCATCATGGCCC-TTA-CGACC-AGGGCTACACACGTGCTACAATGG-C-GCATACAAAGAG--AAGCGA--CCTCGCGAGAG--CAAGC-GGA--CCTCA-TAAAGTGC-GT-CGT-AGT-CCGGAT-TG-GAGTCTGCAACTCGACT-C-CATGAAG-TCGGAATCGCTAGTAATCG-TGGATCAG-AATGCC-ACGGTGAATACGTTCCCGGGCCTTGTACACACCGCCCGTCACACCA-TG-GGAGTGGGTTG-CAA-A---AGAAGT-AGGT-AG-CTTAACCTT---CGGGAGGGCGCTTA-CC-AC-TTTG----TG--ATTCA--TGACT-GGGGTGAAGTCGTAACAAGGTA-ACCGTA--GG--GGAACCTGCGG-TTGGATCACCTCCTT---A
+target            0 ATTTA-TC-GGA-GAGTTTGATCC-TGGCTCAGGAC--GAACGCTGGCGGC-GTGCCTAA
+                  0 |---|-|--|-|-||||||||||--||||||||-|---|||||||||||||-|-||||||
+query             0 A---AAT-TG-AAGAGTTTGATC-ATGGCTCAG-A-TTGAACGCTGGCGGCAG-GCCTAA
+
+target           53 T-ACATGCAAGTCGAG-CGG-A-CAG-AT-GGGA-GCTTGCT-C----CCTGAT-GTTAG
+                 60 --|||||||||||||--|||-|-|||-|--|--|-|||||||-|----|-|||--|--||
+query            51 -CACATGCAAGTCGA-ACGGTAACAGGA-AG--AAGCTTGCTTCTTTGC-TGA-CG--AG
+
+target          100 C-GGCGGACGGGTGAGTAACAC-GT--GGGTAA-CCTGCCTGTAA-G-ACTGGG--ATAA
+                120 --|||||||||||||||||----||--|||-||-|-||||||-|--|-|--|||--||||
+query           102 -TGGCGGACGGGTGAGTAA---TGTCTGGG-AAAC-TGCCTG-A-TGGA--GGGGGATAA
+
+target          151 CT-CC-GGGAAACCGG--GGCTAATACCGG-ATGGTTGTTTGAACCGCAT-GGTTCAA-A
+                180 ||-|--||-||||-||--|-|||||||||--||---------|||-|--|-|---|||-|
+query           152 CTAC-TGG-AAAC-GGTAG-CTAATACCG-CAT---------AAC-G--TCG---CAAGA
+
+target          204 C-ATAA-AAGGTGG--C-TTCGG-C-TACCACTTA-C-A--G-ATG-GACCC-GC--GGC
+                240 |-|-||-|-||-||--|-|||||-|-|-|---||--|-|--|-|||-|-|||-|---||-
+query           192 CCA-AAGA-GG-GGGACCTTCGGGCCT-C---TT-GCCATCGGATGTG-CCCAG-ATGG-
+
+target          248 GCATTAGCTAGTT-GGTGAGG-TAACGGCTCACC-AAGGCGACGATGCG--TAGCC-GA-
+                300 |-||||||||||--||||-||-||||||||||||-|-|||||||||-|---||||--|--
+query           241 G-ATTAGCTAGT-AGGTG-GGGTAACGGCTCACCTA-GGCGACGAT-C-CCTAGC-TG-G
+
+target          301 -CCTGAGAGGG-TGATC--GGCCACACTGGGA-CTGAGACACGG-CCCAGACTCCTACGG
+                360 -|-|||||||--|||-|--|-|||||||||-|-|||||||||||-||-||||||||||||
+query           293 TC-TGAGAGG-ATGA-CCAG-CCACACTGG-AACTGAGACACGGTCC-AGACTCCTACGG
+
+target          355 GAGGCAGCAGTAGGG-AATC-TTCCGCA-A-TGGA-CG-AAAGTC-TGAC-GG-AGCAAC
+                420 |||||||||||-|||-|||--||--|||-|-|||--||-||-|-|-|||--|--|||--|
+query           347 GAGGCAGCAGT-GGGGAAT-ATT--GCACAATGG-GCGCAA-G-CCTGA-TG-CAGC--C
+
+target          406 --GCCGCGTG-AGTGAT-GAAGG--TTTTCGGA-TC-GTAAAGCT-CTGTTGTT-AG-GG
+                480 --||||||||-|-|||--|||||--||--|||--|--||||||-|-||-||----||-||
+query           396 ATGCCGCGTGTA-TGA-AGAAGGCCTT--CGG-GT-TGTAAAG-TACT-TT---CAGCGG
+
+target          455 --A--A-G--A--ACAAGTGCCGTTCGAATAGGGC----GG-TACC-TTGACGGT-ACCT
+                540 --|--|-|--|--|-||||----|---||||---|----|--|-|--||||||-|-|||-
+query           445 GGAGGAAGGGAGTA-AAGT----T---AATA---CCTTTG-CT-C-ATTGACG-TTACC-
+
+target          499 AAC-CAGAA-A-GCCAC-GGCTAACTAC-GTGCCAGCAGCCGCGGTAATACGT-AGG-TG
+                600 --|-|||||-|-||-||-||||||||-|-|||||||||||||||||||||||--|||-||
+query           489 --CGCAGAAGAAGC-ACCGGCTAACT-CCGTGCCAGCAGCCGCGGTAATACG-GAGGGTG
+
+target          552 GCAAGCGTTG--TCCGGAATTA-TTGGGCGTAAAG-GGCT-CGCAGGCGGTTTC-TTAAG
+                660 -||||||||---||-|||||||-|-||||||||||-|-|--||||||||||||--|||||
+query           544 -CAAGCGTT-AATC-GGAATTACT-GGGCGTAAAGCG-C-ACGCAGGCGGTTT-GTTAAG
+
+target          606 TCT-GATGTGAAAG-CCCCCGG-CTCAACC-GGGGAGGG--T-CAT-TGGA-AACTGGGG
+                720 ||--|||||||||--||||-||-|||||||-|||-|-----|-|||-||-|-|-||||--
+query           597 TC-AGATGTGAAA-TCCCC-GGGCTCAACCTGGG-A---ACTGCATCTG-ATA-CTGG--
+
+target          657 -AA-CTTGAGTGCA--G-AAGAGGAGAGTGG-A-A-TTCCACG-TGTAGCGGTGAAATGC
+                780 -||-|||||||-|---|-|-||||-|-|-||-|-|-|||||-|-||||||||||||||||
+query           646 CAAGCTTGAGT-C-TCGTA-GAGG-G-G-GGTAGAATTCCA-GGTGTAGCGGTGAAATGC
+
+target          708 GTAGAGATG-TGGAGGAAC-ACCAG-TGGCGAAGGCGA-CTCTC--TGGT-CTGTAA--C
+                840 ||||||||--||||||||--|||-|-|||||||||||--|-|-|--|||--|-|-||--|
+query           699 GTAGAGAT-CTGGAGGAA-TACC-GGTGGCGAAGGCG-GC-C-CCCTGG-AC-G-AAGAC
+
+target          759 TGACGCTG-AGGA-GCGAAAGCGTGGGGAGCGAA-CAGGATTAGATACCCTGGTAGTCCA
+                900 |||||||--|||--|||||||||||||||||-||-|||||||||||||||||||||||||
+query           750 TGACGCT-CAGG-TGCGAAAGCGTGGGGAGC-AAACAGGATTAGATACCCTGGTAGTCCA
+
+target          816 CGCCGTAAACGATGAGT-G-CTAAGTGTT-AGGGGGTT-TCCGCCCCTT-AGTGC-TG-C
+                960 ||||||||||||||--|-|-||---||---|||---||-|--||||-||-||-||-||-|
+query           807 CGCCGTAAACGATG--TCGACT---TG--GAGG---TTGT--GCCC-TTGAG-GCGTGGC
+
+target          869 ------AGCTAACGCA-TTAAG-C-ACTCCGCCTGGGGAGTACGGTC-GCAAGACTG--A
+               1020 ------|||||||||--|||||-|-||-|-|||||||||||||||-|-|||||---|--|
+query           853 TTCCGGAGCTAACGC-GTTAAGTCGAC-C-GCCTGGGGAGTACGG-CCGCAAG---GTTA
+
+target          917 AA-CTCAAA-GGAATTGACGGGGGCCCGCACAAGCGGTGGAGCATGTGGTTTAATTCGAA
+               1080 ||-||||||-|-|||||||||||||||||||||||||||||||||||||||||||||||-
+query           906 AAACTCAAATG-AATTGACGGGGGCCCGCACAAGCGGTGGAGCATGTGGTTTAATTCGA-
+
+target          975 -GCAACGCGAAGAACCTTACCA-GGTCTTGACATCCTCTGACA-A--T--CCTAGAGATA
+               1140 -||||||||||||||||||||--|||||||||||||----|||-|--|--||-||||||-
+query           964 TGCAACGCGAAGAACCTTACC-TGGTCTTGACATCC----ACAGAACTTTCC-AGAGAT-
+
+target         1028 GGAC--G-T-CCCCTTCGGGGGCAGA--GTGA--CAGGTGG-TGCATGG-TTGTCGTCAG
+               1200 |||---|-|-||--||||||---|-|--||||--||||||--|||||||-|-||||||||
+query          1017 GGA-TTGGTGCC--TTCGGG---A-ACTGTGAGACAGGTG-CTGCATGGCT-GTCGTCAG
+
+target         1078 CTCGTGTC-GTGAGA-TGTTGGGTTAAGTCCCGCAACGAGCGCAACCCTTGATCTTA--G
+               1260 |||||||--||||-|-||||||||||||||||||||||||||||||||||-|||||---|
+query          1068 CTCGTGT-TGTGA-AATGTTGGGTTAAGTCCCGCAACGAGCGCAACCCTT-ATCTT-TTG
+
+target         1134 TTGCCAGCA--TTCA-GTTG--GGC-A-CTCTAA-GGT-GACTGCC-GGTGAC-AAACC-
+               1320 ||||||||---|-|--|--|--||--|-|||-||-||--|||||||-|-|||--||||--
+query          1124 TTGCCAGC-GGT-C-CG--GCCGG-GAACTC-AAAGG-AGACTGCCAG-TGA-TAAAC-T
+
+target         1182 GGAGGAAGGTGGGGATGACGTCAAA-TCATCATG-CCCCTTAT-GACCT-GGGCTACACA
+               1380 ||||||||||||||||||||||||--||||||||-|||-|||--||||--||||||||||
+query          1173 GGAGGAAGGTGGGGATGACGTCAA-GTCATCATGGCCC-TTA-CGACC-AGGGCTACACA
+
+target         1238 CGTGCTACAATGGACAG-A-ACAAAG-GGCA-GCGAAACC--GCGAG-GTT-AAGCC--A
+               1440 |||||||||||||-|-|-|-||||||-|--|-||||--||--|||||-|---||||---|
+query          1229 CGTGCTACAATGG-C-GCATACAAAGAG--AAGCGA--CCTCGCGAGAG--CAAGC-GGA
+
+target         1288 ATCC-CAC-AAA-T-CTGTTC-TCAGTTC-GGATC-GC-AGTCTGCAACTCGACTGCG--
+               1500 --||-||--|||-|-|-||-|-|-|||-|-||||--|--||||||||||||||||-|---
+query          1280 --CCTCA-TAAAGTGC-GT-CGT-AGT-CCGGAT-TG-GAGTCTGCAACTCGACT-C-CA
+
+target         1338 TGAAGCT-GGAATCGCTAGTAATCGC-GGATCAGCA-TGCCG-CGGTGAATACGTTCCCG
+               1560 |||||-|-|||||||||||||||||--|||||||-|-||||--|||||||||||||||||
+query          1329 TGAAG-TCGGAATCGCTAGTAATCG-TGGATCAG-AATGCC-ACGGTGAATACGTTCCCG
+
+target         1394 GGCCTTGTACACACCGCCCGTCACACCAC-GAG-AGT---TTGT-AACACCC-GAAGTC-
+               1620 ||||||||||||||||||||||||||||--|-|-|||---|||--||-|----|||||--
+query          1385 GGCCTTGTACACACCGCCCGTCACACCA-TG-GGAGTGGGTTG-CAA-A---AGAAGT-A
+
+target         1446 GGTGAGG-T-AACCTTTTA-GG-AG--C-C--AGCCG-CC---GAAGGTGGGA--CAGAT
+               1680 |||-||--|-||||||----||-||--|-|--|-||--|----|----||--|--||--|
+query          1437 GGT-AG-CTTAACCTT---CGGGAGGGCGCTTA-CC-AC-TTTG----TG--ATTCA--T
+
+target         1491 GA-TTGGGGTGAAGTCGTAACAAGGTAG-CCGTATCGGAAGG----TGCGGCT-GGATCA
+               1740 ||-|-||||||||||||||||||||||--|||||--||--||----|||||-|-||||||
+query          1481 GACT-GGGGTGAAGTCGTAACAAGGTA-ACCGTA--GG--GGAACCTGCGG-TTGGATCA
+
+target         1544 CCTCCTTTCTA 1555
+               1800 |||||||---| 1811
+query          1534 CCTCCTT---A 1542
 """,
         )
         self.assertEqual(alignment.shape, (2, 1811))
@@ -3554,9 +3794,129 @@ A---AAT-TG-AAGAGTTTGATC-ATGGCTCAG-A-TTGAACGCTGGCGGCAG-GCCTAA-CACATGCAAGTCGA-ACGG
         self.assertEqual(
             str(alignment),
             """\
-ATTTA-TC-GGA-GAGTTTGATCC-TGGCTCAGGAC--GAACGCTGGCGGC-GTGCCTAAT-ACATGCAAGTCGAG-CGG-A-CAG-AT-GGGA-GCTTGCT-C----CCTGAT-GTTAGC-GGCGGACGGGTGAGTAACAC-GT--GGGTAA-CCTGCCTGTAA-G-ACTGGG--ATAACT-CC-GGGAAACCGG--GGCTAATACCGG-ATGGTTGTTTGAACCGCAT-GGTTCAA-AC-ATAA-AAGGTGG--C-TTCGG-C-TACCACTTA-C-A--G-ATG-GACCC-GC--GGCGCATTAGCTAGTT-GGTGAGG-TAACGGCTCACC-AAGGCGACGATGCG--TAGCC-GA--CCTGAGAGGG-TGATC--GGCCACACTGGGA-CTGAGACACGG-CCCAGACTCCTACGGGAGGCAGCAGTAGGG-AATC-TTCCGCA-A-TGGA-CG-AAAGTC-TGAC-GG-AGCAAC--GCCGCGTG-AGTGAT-GAAGG--TTTTCGGA-TC-GTAAAGCT-CTGTTGTT-AG-GG--A--A-G--A--ACAAGTGCCGTTCGAATAGGGC----GG-TACC-TTGACGGT-ACCTAAC-CAGAA-A-GCCAC-GGCTAACTAC-GTGCCAGCAGCCGCGGTAATACGT-AGG-TGGCAAGCGTTG--TCCGGAATTA-TTGGGCGTAAAG-GGCT-CGCAGGCGGTTTC-TTAAGTCT-GATGTGAAAG-CCCCCGG-CTCAACC-GGGGAGGG--T-CAT-TGGA-AACTGGGG-AA-CTTGAGTGCA--G-AAGAGGAGAGTGG-A-A-TTCCACG-TGTAGCGGTGAAATGCGTAGAGATG-TGGAGGAAC-ACCAG-TGGCGAAGGCGA-CTCTC--TGGT-CTGTAA--CTGACGCTG-AGGA-GCGAAAGCGTGGGGAGCGAA-CAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGAGT-G-CTAAGTGTT-AGGGGGTT-TCCGCCCCTT-AGTGC-TG-C------AGCTAACGCA-TTAAG-C-ACTCCGCCTGGGGAGTACGGTC-GCAAGACTG--AAA-CTCAAA-GGAATTGACGGGGGCCCGCACAAGCGGTGGAGCATGTGGTTTAATTCGAA-GCAACGCGAAGAACCTTACCA-GGTCTTGACATCCTCTGACA-A--T--CCTAGAGATAGGAC--G-T-CCCCTTCGGGGGCAGA--GTGA--CAGGTGG-TGCATGG-TTGTCGTCAGCTCGTGTC-GTGAGA-TGTTGGGTTAAGTCCCGCAACGAGCGCAACCCTTGATCTTA--GTTGCCAGCA--TTCA-GTTG--GGC-A-CTCTAA-GGT-GACTGCC-GGTGAC-AAACC-GGAGGAAGGTGGGGATGACGTCAAA-TCATCATG-CCCCTTAT-GACCT-GGGCTACACACGTGCTACAATGGACAG-A-ACAAAG-GGCA-GCGAAACC--GCGAG-GTT-AAGCC--AATCC-CAC-AAA-T-CTGTTC-TCAGTTC-GGATC-GC-AGTCTGCAACTCGACTGCG--TGAAGCT-GGAATCGCTAGTAATCGC-GGATCAGCA-TGCCG-CGGTGAATACGTTCCCGGGCCTTGTACACACCGCCCGTCACACCAC-GAG-AGT---TTGT-AACACCC-GAAGTC-GGTGAGG-T-AACCTTTTA-GG-AG--C-C--AGCCG-CC---GAAGGTGGGA--CAGATGA-TTGGGGTGAAGTCGTAACAAGGTAG-CCGTATCGGAAGG----TGCGGCT-GGATCACCTCCTTTCTA
-|---|-|--|-|-||||||||||--||||||||-|---|||||||||||||-|-||||||--|||||||||||||--|||-|-|||-|--|--|-|||||||-|----|-|||--|--||--|||||||||||||||||----||--|||-||-|-||||||-|--|-|--|||--||||||-|--||-||||-||--|-|||||||||--||---------|||-|--|-|---|||-||-|-||-|-||-||--|-|||||-|-|-|---||--|-|--|-|||-|-|||-|---||-|-||||||||||--||||-||-||||||||||||-|-|||||||||-|---||||--|---|-|||||||--|||-|--|-|||||||||-|-|||||||||||-||-|||||||||||||||||||||||-|||-|||--||--|||-|-|||--||-||-|-|-|||--|--|||--|--||||||||-|-|||--|||||--||--|||--|--||||||-|-||-||----||-||--|--|-|--|--|-||||----|---||||---|----|--|-|--||||||-|-|||---|-|||||-|-||-||-||||||||-|-|||||||||||||||||||||||--|||-||-||||||||---||-|||||||-|-||||||||||-|-|--||||||||||||--|||||||--|||||||||--||||-||-|||||||-|||-|-----|-|||-||-|-|-||||---||-|||||||-|---|-|-||||-|-|-||-|-|-|||||-|-||||||||||||||||||||||||--||||||||--|||-|-|||||||||||--|-|-|--|||--|-|-||--||||||||--|||--|||||||||||||||||-||-|||||||||||||||||||||||||||||||||||||||--|-|-||---||---|||---||-|--||||-||-||-||-||-|------|||||||||--|||||-|-||-|-|||||||||||||||-|-|||||---|--|||-||||||-|-|||||||||||||||||||||||||||||||||||||||||||||||--||||||||||||||||||||--|||||||||||||----|||-|--|--||-||||||-|||---|-|-||--||||||---|-|--||||--||||||--|||||||-|-|||||||||||||||--||||-|-||||||||||||||||||||||||||||||||||-|||||---|||||||||---|-|--|--|--||--|-|||-||-||--|||||||-|-|||--||||--||||||||||||||||||||||||--||||||||-|||-|||--||||--|||||||||||||||||||||||-|-|-|-||||||-|--|-||||--||--|||||-|---||||---|--||-||--|||-|-|-||-|-|-|||-|-||||--|--||||||||||||||||-|---|||||-|-|||||||||||||||||--|||||||-|-||||--|||||||||||||||||||||||||||||||||||||||||||||--|-|-|||---|||--||-|----|||||--|||-||--|-||||||----||-||--|-|--|-||--|----|----||--|--||--|||-|-||||||||||||||||||||||--|||||--||--||----|||||-|-|||||||||||||---|
-A---AAT-TG-AAGAGTTTGATC-ATGGCTCAG-A-TTGAACGCTGGCGGCAG-GCCTAA-CACATGCAAGTCGA-ACGGTAACAGGA-AG--AAGCTTGCTTCTTTGC-TGA-CG--AG-TGGCGGACGGGTGAGTAA---TGTCTGGG-AAAC-TGCCTG-A-TGGA--GGGGGATAACTAC-TGG-AAAC-GGTAG-CTAATACCG-CAT---------AAC-G--TCG---CAAGACCA-AAGA-GG-GGGACCTTCGGGCCT-C---TT-GCCATCGGATGTG-CCCAG-ATGG-G-ATTAGCTAGT-AGGTG-GGGTAACGGCTCACCTA-GGCGACGAT-C-CCTAGC-TG-GTC-TGAGAGG-ATGA-CCAG-CCACACTGG-AACTGAGACACGGTCC-AGACTCCTACGGGAGGCAGCAGT-GGGGAAT-ATT--GCACAATGG-GCGCAA-G-CCTGA-TG-CAGC--CATGCCGCGTGTA-TGA-AGAAGGCCTT--CGG-GT-TGTAAAG-TACT-TT---CAGCGGGGAGGAAGGGAGTA-AAGT----T---AATA---CCTTTG-CT-C-ATTGACG-TTACC---CGCAGAAGAAGC-ACCGGCTAACT-CCGTGCCAGCAGCCGCGGTAATACG-GAGGGTG-CAAGCGTT-AATC-GGAATTACT-GGGCGTAAAGCG-C-ACGCAGGCGGTTT-GTTAAGTC-AGATGTGAAA-TCCCC-GGGCTCAACCTGGG-A---ACTGCATCTG-ATA-CTGG--CAAGCTTGAGT-C-TCGTA-GAGG-G-G-GGTAGAATTCCA-GGTGTAGCGGTGAAATGCGTAGAGAT-CTGGAGGAA-TACC-GGTGGCGAAGGCG-GC-C-CCCTGG-AC-G-AAGACTGACGCT-CAGG-TGCGAAAGCGTGGGGAGC-AAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATG--TCGACT---TG--GAGG---TTGT--GCCC-TTGAG-GCGTGGCTTCCGGAGCTAACGC-GTTAAGTCGAC-C-GCCTGGGGAGTACGG-CCGCAAG---GTTAAAACTCAAATG-AATTGACGGGGGCCCGCACAAGCGGTGGAGCATGTGGTTTAATTCGA-TGCAACGCGAAGAACCTTACC-TGGTCTTGACATCC----ACAGAACTTTCC-AGAGAT-GGA-TTGGTGCC--TTCGGG---A-ACTGTGAGACAGGTG-CTGCATGGCT-GTCGTCAGCTCGTGT-TGTGA-AATGTTGGGTTAAGTCCCGCAACGAGCGCAACCCTT-ATCTT-TTGTTGCCAGC-GGT-C-CG--GCCGG-GAACTC-AAAGG-AGACTGCCAG-TGA-TAAAC-TGGAGGAAGGTGGGGATGACGTCAA-GTCATCATGGCCC-TTA-CGACC-AGGGCTACACACGTGCTACAATGG-C-GCATACAAAGAG--AAGCGA--CCTCGCGAGAG--CAAGC-GGA--CCTCA-TAAAGTGC-GT-CGT-AGT-CCGGAT-TG-GAGTCTGCAACTCGACT-C-CATGAAG-TCGGAATCGCTAGTAATCG-TGGATCAG-AATGCC-ACGGTGAATACGTTCCCGGGCCTTGTACACACCGCCCGTCACACCA-TG-GGAGTGGGTTG-CAA-A---AGAAGT-AGGT-AG-CTTAACCTT---CGGGAGGGCGCTTA-CC-AC-TTTG----TG--ATTCA--TGACT-GGGGTGAAGTCGTAACAAGGTA-ACCGTA--GG--GGAACCTGCGG-TTGGATCACCTCCTT---A
+target            0 ATTTA-TC-GGA-GAGTTTGATCC-TGGCTCAGGAC--GAACGCTGGCGGC-GTGCCTAA
+                  0 |---|-|--|-|-||||||||||--||||||||-|---|||||||||||||-|-||||||
+query          1542 A---AAT-TG-AAGAGTTTGATC-ATGGCTCAG-A-TTGAACGCTGGCGGCAG-GCCTAA
+
+target           53 T-ACATGCAAGTCGAG-CGG-A-CAG-AT-GGGA-GCTTGCT-C----CCTGAT-GTTAG
+                 60 --|||||||||||||--|||-|-|||-|--|--|-|||||||-|----|-|||--|--||
+query          1491 -CACATGCAAGTCGA-ACGGTAACAGGA-AG--AAGCTTGCTTCTTTGC-TGA-CG--AG
+
+target          100 C-GGCGGACGGGTGAGTAACAC-GT--GGGTAA-CCTGCCTGTAA-G-ACTGGG--ATAA
+                120 --|||||||||||||||||----||--|||-||-|-||||||-|--|-|--|||--||||
+query          1440 -TGGCGGACGGGTGAGTAA---TGTCTGGG-AAAC-TGCCTG-A-TGGA--GGGGGATAA
+
+target          151 CT-CC-GGGAAACCGG--GGCTAATACCGG-ATGGTTGTTTGAACCGCAT-GGTTCAA-A
+                180 ||-|--||-||||-||--|-|||||||||--||---------|||-|--|-|---|||-|
+query          1390 CTAC-TGG-AAAC-GGTAG-CTAATACCG-CAT---------AAC-G--TCG---CAAGA
+
+target          204 C-ATAA-AAGGTGG--C-TTCGG-C-TACCACTTA-C-A--G-ATG-GACCC-GC--GGC
+                240 |-|-||-|-||-||--|-|||||-|-|-|---||--|-|--|-|||-|-|||-|---||-
+query          1350 CCA-AAGA-GG-GGGACCTTCGGGCCT-C---TT-GCCATCGGATGTG-CCCAG-ATGG-
+
+target          248 GCATTAGCTAGTT-GGTGAGG-TAACGGCTCACC-AAGGCGACGATGCG--TAGCC-GA-
+                300 |-||||||||||--||||-||-||||||||||||-|-|||||||||-|---||||--|--
+query          1301 G-ATTAGCTAGT-AGGTG-GGGTAACGGCTCACCTA-GGCGACGAT-C-CCTAGC-TG-G
+
+target          301 -CCTGAGAGGG-TGATC--GGCCACACTGGGA-CTGAGACACGG-CCCAGACTCCTACGG
+                360 -|-|||||||--|||-|--|-|||||||||-|-|||||||||||-||-||||||||||||
+query          1249 TC-TGAGAGG-ATGA-CCAG-CCACACTGG-AACTGAGACACGGTCC-AGACTCCTACGG
+
+target          355 GAGGCAGCAGTAGGG-AATC-TTCCGCA-A-TGGA-CG-AAAGTC-TGAC-GG-AGCAAC
+                420 |||||||||||-|||-|||--||--|||-|-|||--||-||-|-|-|||--|--|||--|
+query          1195 GAGGCAGCAGT-GGGGAAT-ATT--GCACAATGG-GCGCAA-G-CCTGA-TG-CAGC--C
+
+target          406 --GCCGCGTG-AGTGAT-GAAGG--TTTTCGGA-TC-GTAAAGCT-CTGTTGTT-AG-GG
+                480 --||||||||-|-|||--|||||--||--|||--|--||||||-|-||-||----||-||
+query          1146 ATGCCGCGTGTA-TGA-AGAAGGCCTT--CGG-GT-TGTAAAG-TACT-TT---CAGCGG
+
+target          455 --A--A-G--A--ACAAGTGCCGTTCGAATAGGGC----GG-TACC-TTGACGGT-ACCT
+                540 --|--|-|--|--|-||||----|---||||---|----|--|-|--||||||-|-|||-
+query          1097 GGAGGAAGGGAGTA-AAGT----T---AATA---CCTTTG-CT-C-ATTGACG-TTACC-
+
+target          499 AAC-CAGAA-A-GCCAC-GGCTAACTAC-GTGCCAGCAGCCGCGGTAATACGT-AGG-TG
+                600 --|-|||||-|-||-||-||||||||-|-|||||||||||||||||||||||--|||-||
+query          1053 --CGCAGAAGAAGC-ACCGGCTAACT-CCGTGCCAGCAGCCGCGGTAATACG-GAGGGTG
+
+target          552 GCAAGCGTTG--TCCGGAATTA-TTGGGCGTAAAG-GGCT-CGCAGGCGGTTTC-TTAAG
+                660 -||||||||---||-|||||||-|-||||||||||-|-|--||||||||||||--|||||
+query           998 -CAAGCGTT-AATC-GGAATTACT-GGGCGTAAAGCG-C-ACGCAGGCGGTTT-GTTAAG
+
+target          606 TCT-GATGTGAAAG-CCCCCGG-CTCAACC-GGGGAGGG--T-CAT-TGGA-AACTGGGG
+                720 ||--|||||||||--||||-||-|||||||-|||-|-----|-|||-||-|-|-||||--
+query           945 TC-AGATGTGAAA-TCCCC-GGGCTCAACCTGGG-A---ACTGCATCTG-ATA-CTGG--
+
+target          657 -AA-CTTGAGTGCA--G-AAGAGGAGAGTGG-A-A-TTCCACG-TGTAGCGGTGAAATGC
+                780 -||-|||||||-|---|-|-||||-|-|-||-|-|-|||||-|-||||||||||||||||
+query           896 CAAGCTTGAGT-C-TCGTA-GAGG-G-G-GGTAGAATTCCA-GGTGTAGCGGTGAAATGC
+
+target          708 GTAGAGATG-TGGAGGAAC-ACCAG-TGGCGAAGGCGA-CTCTC--TGGT-CTGTAA--C
+                840 ||||||||--||||||||--|||-|-|||||||||||--|-|-|--|||--|-|-||--|
+query           843 GTAGAGAT-CTGGAGGAA-TACC-GGTGGCGAAGGCG-GC-C-CCCTGG-AC-G-AAGAC
+
+target          759 TGACGCTG-AGGA-GCGAAAGCGTGGGGAGCGAA-CAGGATTAGATACCCTGGTAGTCCA
+                900 |||||||--|||--|||||||||||||||||-||-|||||||||||||||||||||||||
+query           792 TGACGCT-CAGG-TGCGAAAGCGTGGGGAGC-AAACAGGATTAGATACCCTGGTAGTCCA
+
+target          816 CGCCGTAAACGATGAGT-G-CTAAGTGTT-AGGGGGTT-TCCGCCCCTT-AGTGC-TG-C
+                960 ||||||||||||||--|-|-||---||---|||---||-|--||||-||-||-||-||-|
+query           735 CGCCGTAAACGATG--TCGACT---TG--GAGG---TTGT--GCCC-TTGAG-GCGTGGC
+
+target          869 ------AGCTAACGCA-TTAAG-C-ACTCCGCCTGGGGAGTACGGTC-GCAAGACTG--A
+               1020 ------|||||||||--|||||-|-||-|-|||||||||||||||-|-|||||---|--|
+query           689 TTCCGGAGCTAACGC-GTTAAGTCGAC-C-GCCTGGGGAGTACGG-CCGCAAG---GTTA
+
+target          917 AA-CTCAAA-GGAATTGACGGGGGCCCGCACAAGCGGTGGAGCATGTGGTTTAATTCGAA
+               1080 ||-||||||-|-|||||||||||||||||||||||||||||||||||||||||||||||-
+query           636 AAACTCAAATG-AATTGACGGGGGCCCGCACAAGCGGTGGAGCATGTGGTTTAATTCGA-
+
+target          975 -GCAACGCGAAGAACCTTACCA-GGTCTTGACATCCTCTGACA-A--T--CCTAGAGATA
+               1140 -||||||||||||||||||||--|||||||||||||----|||-|--|--||-||||||-
+query           578 TGCAACGCGAAGAACCTTACC-TGGTCTTGACATCC----ACAGAACTTTCC-AGAGAT-
+
+target         1028 GGAC--G-T-CCCCTTCGGGGGCAGA--GTGA--CAGGTGG-TGCATGG-TTGTCGTCAG
+               1200 |||---|-|-||--||||||---|-|--||||--||||||--|||||||-|-||||||||
+query           525 GGA-TTGGTGCC--TTCGGG---A-ACTGTGAGACAGGTG-CTGCATGGCT-GTCGTCAG
+
+target         1078 CTCGTGTC-GTGAGA-TGTTGGGTTAAGTCCCGCAACGAGCGCAACCCTTGATCTTA--G
+               1260 |||||||--||||-|-||||||||||||||||||||||||||||||||||-|||||---|
+query           474 CTCGTGT-TGTGA-AATGTTGGGTTAAGTCCCGCAACGAGCGCAACCCTT-ATCTT-TTG
+
+target         1134 TTGCCAGCA--TTCA-GTTG--GGC-A-CTCTAA-GGT-GACTGCC-GGTGAC-AAACC-
+               1320 ||||||||---|-|--|--|--||--|-|||-||-||--|||||||-|-|||--||||--
+query           418 TTGCCAGC-GGT-C-CG--GCCGG-GAACTC-AAAGG-AGACTGCCAG-TGA-TAAAC-T
+
+target         1182 GGAGGAAGGTGGGGATGACGTCAAA-TCATCATG-CCCCTTAT-GACCT-GGGCTACACA
+               1380 ||||||||||||||||||||||||--||||||||-|||-|||--||||--||||||||||
+query           369 GGAGGAAGGTGGGGATGACGTCAA-GTCATCATGGCCC-TTA-CGACC-AGGGCTACACA
+
+target         1238 CGTGCTACAATGGACAG-A-ACAAAG-GGCA-GCGAAACC--GCGAG-GTT-AAGCC--A
+               1440 |||||||||||||-|-|-|-||||||-|--|-||||--||--|||||-|---||||---|
+query           313 CGTGCTACAATGG-C-GCATACAAAGAG--AAGCGA--CCTCGCGAGAG--CAAGC-GGA
+
+target         1288 ATCC-CAC-AAA-T-CTGTTC-TCAGTTC-GGATC-GC-AGTCTGCAACTCGACTGCG--
+               1500 --||-||--|||-|-|-||-|-|-|||-|-||||--|--||||||||||||||||-|---
+query           262 --CCTCA-TAAAGTGC-GT-CGT-AGT-CCGGAT-TG-GAGTCTGCAACTCGACT-C-CA
+
+target         1338 TGAAGCT-GGAATCGCTAGTAATCGC-GGATCAGCA-TGCCG-CGGTGAATACGTTCCCG
+               1560 |||||-|-|||||||||||||||||--|||||||-|-||||--|||||||||||||||||
+query           213 TGAAG-TCGGAATCGCTAGTAATCG-TGGATCAG-AATGCC-ACGGTGAATACGTTCCCG
+
+target         1394 GGCCTTGTACACACCGCCCGTCACACCAC-GAG-AGT---TTGT-AACACCC-GAAGTC-
+               1620 ||||||||||||||||||||||||||||--|-|-|||---|||--||-|----|||||--
+query           157 GGCCTTGTACACACCGCCCGTCACACCA-TG-GGAGTGGGTTG-CAA-A---AGAAGT-A
+
+target         1446 GGTGAGG-T-AACCTTTTA-GG-AG--C-C--AGCCG-CC---GAAGGTGGGA--CAGAT
+               1680 |||-||--|-||||||----||-||--|-|--|-||--|----|----||--|--||--|
+query           105 GGT-AG-CTTAACCTT---CGGGAGGGCGCTTA-CC-AC-TTTG----TG--ATTCA--T
+
+target         1491 GA-TTGGGGTGAAGTCGTAACAAGGTAG-CCGTATCGGAAGG----TGCGGCT-GGATCA
+               1740 ||-|-||||||||||||||||||||||--|||||--||--||----|||||-|-||||||
+query            61 GACT-GGGGTGAAGTCGTAACAAGGTA-ACCGTA--GG--GGAACCTGCGG-TTGGATCA
+
+target         1544 CCTCCTTTCTA 1555
+               1800 |||||||---| 1811
+query             8 CCTCCTT---A    0
 """,
         )
         self.assertAlmostEqual(alignment.score, 1286.0)
@@ -3595,6 +3955,152 @@ Pairwise sequence aligner with parameters
         )
 
 
+class TestPredefinedScoringSchemes(unittest.TestCase):
+    def test_blastn(self):
+        aligner = Align.PairwiseAligner(scoring="blastn")
+        self.assertRegex(
+            str(aligner),
+            """\
+^Pairwise sequence aligner with parameters
+  substitution_matrix: <Array object at .*
+  target_internal_open_gap_score: -7.000000
+  target_internal_extend_gap_score: -2.000000
+  target_left_open_gap_score: -7.000000
+  target_left_extend_gap_score: -2.000000
+  target_right_open_gap_score: -7.000000
+  target_right_extend_gap_score: -2.000000
+  query_internal_open_gap_score: -7.000000
+  query_internal_extend_gap_score: -2.000000
+  query_left_open_gap_score: -7.000000
+  query_left_extend_gap_score: -2.000000
+  query_right_open_gap_score: -7.000000
+  query_right_extend_gap_score: -2.000000
+  mode: global
+$""",
+        )
+        self.assertEqual(
+            str(aligner.substitution_matrix[:, :]),
+            """\
+     A    T    G    C    S    W    R    Y    K    M    B    V    H    D    N
+A  2.0 -3.0 -3.0 -3.0 -3.0 -1.0 -1.0 -3.0 -3.0 -1.0 -3.0 -1.0 -1.0 -1.0 -2.0
+T -3.0  2.0 -3.0 -3.0 -3.0 -1.0 -3.0 -1.0 -1.0 -3.0 -1.0 -3.0 -1.0 -1.0 -2.0
+G -3.0 -3.0  2.0 -3.0 -1.0 -3.0 -1.0 -3.0 -1.0 -3.0 -1.0 -1.0 -3.0 -1.0 -2.0
+C -3.0 -3.0 -3.0  2.0 -1.0 -3.0 -3.0 -1.0 -3.0 -1.0 -1.0 -1.0 -1.0 -3.0 -2.0
+S -3.0 -3.0 -1.0 -1.0 -1.0 -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0
+W -1.0 -1.0 -3.0 -3.0 -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0
+R -1.0 -3.0 -1.0 -3.0 -1.0 -1.0 -1.0 -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0
+Y -3.0 -1.0 -3.0 -1.0 -1.0 -1.0 -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0
+K -3.0 -1.0 -1.0 -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -3.0 -1.0 -1.0 -1.0 -1.0 -2.0
+M -1.0 -3.0 -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0
+B -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0
+V -1.0 -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0
+H -1.0 -1.0 -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0
+D -1.0 -1.0 -1.0 -3.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0
+N -2.0 -2.0 -2.0 -2.0 -2.0 -2.0 -2.0 -2.0 -2.0 -2.0 -2.0 -2.0 -2.0 -2.0 -2.0
+""",
+        )
+
+    def test_megablast(self):
+        aligner = Align.PairwiseAligner(scoring="megablast")
+        self.assertRegex(
+            str(aligner),
+            """\
+^Pairwise sequence aligner with parameters
+  substitution_matrix: <Array object at .*
+  target_internal_open_gap_score: -2.500000
+  target_internal_extend_gap_score: -2.500000
+  target_left_open_gap_score: -2.500000
+  target_left_extend_gap_score: -2.500000
+  target_right_open_gap_score: -2.500000
+  target_right_extend_gap_score: -2.500000
+  query_internal_open_gap_score: -2.500000
+  query_internal_extend_gap_score: -2.500000
+  query_left_open_gap_score: -2.500000
+  query_left_extend_gap_score: -2.500000
+  query_right_open_gap_score: -2.500000
+  query_right_extend_gap_score: -2.500000
+  mode: global
+$""",
+        )
+        self.assertEqual(
+            str(aligner.substitution_matrix[:, :]),
+            """\
+     A    T    G    C    S    W    R    Y    K    M    B    V    H    D    N
+A  1.0 -2.0 -2.0 -2.0 -2.0 -1.0 -1.0 -2.0 -2.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0
+T -2.0  1.0 -2.0 -2.0 -2.0 -1.0 -2.0 -1.0 -1.0 -2.0 -1.0 -2.0 -1.0 -1.0 -1.0
+G -2.0 -2.0  1.0 -2.0 -1.0 -2.0 -1.0 -2.0 -1.0 -2.0 -1.0 -1.0 -2.0 -1.0 -1.0
+C -2.0 -2.0 -2.0  1.0 -1.0 -2.0 -2.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0 -2.0 -1.0
+S -2.0 -2.0 -1.0 -1.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+W -1.0 -1.0 -2.0 -2.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+R -1.0 -2.0 -1.0 -2.0 -1.0 -1.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+Y -2.0 -1.0 -2.0 -1.0 -1.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+K -2.0 -1.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0
+M -1.0 -2.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+B -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+V -1.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+H -1.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+D -1.0 -1.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+N -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+""",
+        )
+
+    def test_blastp(self):
+        aligner = Align.PairwiseAligner(scoring="blastp")
+        self.assertRegex(
+            str(aligner),
+            """\
+^Pairwise sequence aligner with parameters
+  substitution_matrix: <Array object at .*
+  target_internal_open_gap_score: -12.000000
+  target_internal_extend_gap_score: -1.000000
+  target_left_open_gap_score: -12.000000
+  target_left_extend_gap_score: -1.000000
+  target_right_open_gap_score: -12.000000
+  target_right_extend_gap_score: -1.000000
+  query_internal_open_gap_score: -12.000000
+  query_internal_extend_gap_score: -1.000000
+  query_left_open_gap_score: -12.000000
+  query_left_extend_gap_score: -1.000000
+  query_right_open_gap_score: -12.000000
+  query_right_extend_gap_score: -1.000000
+  mode: global
+$""",
+        )
+        self.assertEqual(
+            str(aligner.substitution_matrix[:, :]),
+            """\
+     A    B    C    D    E    F    G    H    I    J    K    L    M    N    O    P    Q    R    S    T    U    V    W    X    Y    Z    *
+A  4.0 -2.0  0.0 -2.0 -1.0 -2.0  0.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0 -2.0 -1.0 -1.0 -1.0 -1.0  1.0  0.0  0.0  0.0 -3.0 -1.0 -2.0 -1.0 -4.0
+B -2.0  4.0 -3.0  4.0  1.0 -3.0 -1.0  0.0 -3.0 -3.0  0.0 -4.0 -3.0  4.0 -1.0 -2.0  0.0 -1.0  0.0 -1.0 -3.0 -3.0 -4.0 -1.0 -3.0  0.0 -4.0
+C  0.0 -3.0  9.0 -3.0 -4.0 -2.0 -3.0 -3.0 -1.0 -1.0 -3.0 -1.0 -1.0 -3.0 -1.0 -3.0 -3.0 -3.0 -1.0 -1.0  9.0 -1.0 -2.0 -1.0 -2.0 -3.0 -4.0
+D -2.0  4.0 -3.0  6.0  2.0 -3.0 -1.0 -1.0 -3.0 -3.0 -1.0 -4.0 -3.0  1.0 -1.0 -1.0  0.0 -2.0  0.0 -1.0 -3.0 -3.0 -4.0 -1.0 -3.0  1.0 -4.0
+E -1.0  1.0 -4.0  2.0  5.0 -3.0 -2.0  0.0 -3.0 -3.0  1.0 -3.0 -2.0  0.0 -1.0 -1.0  2.0  0.0  0.0 -1.0 -4.0 -2.0 -3.0 -1.0 -2.0  4.0 -4.0
+F -2.0 -3.0 -2.0 -3.0 -3.0  6.0 -3.0 -1.0  0.0  0.0 -3.0  0.0  0.0 -3.0 -1.0 -4.0 -3.0 -3.0 -2.0 -2.0 -2.0 -1.0  1.0 -1.0  3.0 -3.0 -4.0
+G  0.0 -1.0 -3.0 -1.0 -2.0 -3.0  6.0 -2.0 -4.0 -4.0 -2.0 -4.0 -3.0  0.0 -1.0 -2.0 -2.0 -2.0  0.0 -2.0 -3.0 -3.0 -2.0 -1.0 -3.0 -2.0 -4.0
+H -2.0  0.0 -3.0 -1.0  0.0 -1.0 -2.0  8.0 -3.0 -3.0 -1.0 -3.0 -2.0  1.0 -1.0 -2.0  0.0  0.0 -1.0 -2.0 -3.0 -3.0 -2.0 -1.0  2.0  0.0 -4.0
+I -1.0 -3.0 -1.0 -3.0 -3.0  0.0 -4.0 -3.0  4.0  3.0 -3.0  2.0  1.0 -3.0 -1.0 -3.0 -3.0 -3.0 -2.0 -1.0 -1.0  3.0 -3.0 -1.0 -1.0 -3.0 -4.0
+J -1.0 -3.0 -1.0 -3.0 -3.0  0.0 -4.0 -3.0  3.0  3.0 -3.0  3.0  2.0 -3.0 -1.0 -3.0 -2.0 -2.0 -2.0 -1.0 -1.0  2.0 -2.0 -1.0 -1.0 -3.0 -4.0
+K -1.0  0.0 -3.0 -1.0  1.0 -3.0 -2.0 -1.0 -3.0 -3.0  5.0 -2.0 -1.0  0.0 -1.0 -1.0  1.0  2.0  0.0 -1.0 -3.0 -2.0 -3.0 -1.0 -2.0  1.0 -4.0
+L -1.0 -4.0 -1.0 -4.0 -3.0  0.0 -4.0 -3.0  2.0  3.0 -2.0  4.0  2.0 -3.0 -1.0 -3.0 -2.0 -2.0 -2.0 -1.0 -1.0  1.0 -2.0 -1.0 -1.0 -3.0 -4.0
+M -1.0 -3.0 -1.0 -3.0 -2.0  0.0 -3.0 -2.0  1.0  2.0 -1.0  2.0  5.0 -2.0 -1.0 -2.0  0.0 -1.0 -1.0 -1.0 -1.0  1.0 -1.0 -1.0 -1.0 -1.0 -4.0
+N -2.0  4.0 -3.0  1.0  0.0 -3.0  0.0  1.0 -3.0 -3.0  0.0 -3.0 -2.0  6.0 -1.0 -2.0  0.0  0.0  1.0  0.0 -3.0 -3.0 -4.0 -1.0 -2.0  0.0 -4.0
+O -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -4.0
+P -1.0 -2.0 -3.0 -1.0 -1.0 -4.0 -2.0 -2.0 -3.0 -3.0 -1.0 -3.0 -2.0 -2.0 -1.0  7.0 -1.0 -2.0 -1.0 -1.0 -3.0 -2.0 -4.0 -1.0 -3.0 -1.0 -4.0
+Q -1.0  0.0 -3.0  0.0  2.0 -3.0 -2.0  0.0 -3.0 -2.0  1.0 -2.0  0.0  0.0 -1.0 -1.0  5.0  1.0  0.0 -1.0 -3.0 -2.0 -2.0 -1.0 -1.0  4.0 -4.0
+R -1.0 -1.0 -3.0 -2.0  0.0 -3.0 -2.0  0.0 -3.0 -2.0  2.0 -2.0 -1.0  0.0 -1.0 -2.0  1.0  5.0 -1.0 -1.0 -3.0 -3.0 -3.0 -1.0 -2.0  0.0 -4.0
+S  1.0  0.0 -1.0  0.0  0.0 -2.0  0.0 -1.0 -2.0 -2.0  0.0 -2.0 -1.0  1.0 -1.0 -1.0  0.0 -1.0  4.0  1.0 -1.0 -2.0 -3.0 -1.0 -2.0  0.0 -4.0
+T  0.0 -1.0 -1.0 -1.0 -1.0 -2.0 -2.0 -2.0 -1.0 -1.0 -1.0 -1.0 -1.0  0.0 -1.0 -1.0 -1.0 -1.0  1.0  5.0 -1.0  0.0 -2.0 -1.0 -2.0 -1.0 -4.0
+U  0.0 -3.0  9.0 -3.0 -4.0 -2.0 -3.0 -3.0 -1.0 -1.0 -3.0 -1.0 -1.0 -3.0 -1.0 -3.0 -3.0 -3.0 -1.0 -1.0  9.0 -1.0 -2.0 -1.0 -2.0 -3.0 -4.0
+V  0.0 -3.0 -1.0 -3.0 -2.0 -1.0 -3.0 -3.0  3.0  2.0 -2.0  1.0  1.0 -3.0 -1.0 -2.0 -2.0 -3.0 -2.0  0.0 -1.0  4.0 -3.0 -1.0 -1.0 -2.0 -4.0
+W -3.0 -4.0 -2.0 -4.0 -3.0  1.0 -2.0 -2.0 -3.0 -2.0 -3.0 -2.0 -1.0 -4.0 -1.0 -4.0 -2.0 -3.0 -3.0 -2.0 -2.0 -3.0 11.0 -1.0  2.0 -2.0 -4.0
+X -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -4.0
+Y -2.0 -3.0 -2.0 -3.0 -2.0  3.0 -3.0  2.0 -1.0 -1.0 -2.0 -1.0 -1.0 -2.0 -1.0 -3.0 -1.0 -2.0 -2.0 -2.0 -2.0 -1.0  2.0 -1.0  7.0 -2.0 -4.0
+Z -1.0  0.0 -3.0  1.0  4.0 -3.0 -2.0  0.0 -3.0 -3.0  1.0 -3.0 -1.0  0.0 -1.0 -1.0  4.0  0.0  0.0 -1.0 -3.0 -2.0 -2.0 -1.0 -2.0  4.0 -4.0
+* -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0 -4.0  1.0
+""",
+        )
+
+
 class TestUnicodeStrings(unittest.TestCase):
     def test_needlemanwunsch_simple1(self):
         seq1 = "ĞĀĀČŦ"
@@ -3619,8 +4125,8 @@ class TestUnicodeStrings(unittest.TestCase):
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 2], [4, 5]], [[0, 2], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 2], [4, 5]], [[0, 2], [2, 3]]])
             )
         )
         alignment = alignments[1]
@@ -3635,9 +4141,9 @@ class TestUnicodeStrings(unittest.TestCase):
         )
         self.assertEqual(alignment.shape, (2, 5))
         self.assertTrue(
-            numpy.array_equal(
+            np.array_equal(
                 alignment.aligned,
-                numpy.array([[[0, 1], [2, 3], [4, 5]], [[0, 1], [1, 2], [2, 3]]]),
+                np.array([[[0, 1], [2, 3], [4, 5]], [[0, 1], [1, 2], [2, 3]]]),
             )
         )
 
@@ -3668,15 +4174,15 @@ class TestUnicodeStrings(unittest.TestCase):
         self.assertEqual(
             str(alignment),
             """\
- ℵℷℶℷ
- |-|
-ℸℵ-ℶℸ
+ℵℷℶ
+|-|
+ℵ-ℶ
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[1, 2], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[1, 2], [2, 3]]])
             )
         )
 
@@ -3696,15 +4202,15 @@ class TestUnicodeStrings(unittest.TestCase):
         self.assertEqual(
             str(alignment),
             """\
- 生物科物
- |-|
-学生-科学
+生物科
+|-|
+生-科
 """,
         )
         self.assertEqual(alignment.shape, (2, 3))
         self.assertTrue(
-            numpy.array_equal(
-                alignment.aligned, numpy.array([[[0, 1], [2, 3]], [[1, 2], [2, 3]]])
+            np.array_equal(
+                alignment.aligned, np.array([[[0, 1], [2, 3]], [[1, 2], [2, 3]]])
             )
         )
 
@@ -3887,9 +4393,13 @@ class TestAlignmentFormat(unittest.TestCase):
         self.assertEqual(
             str(alignment),
             """\
-ACGATCAGCGAGCATNGAGC-ACTACGACAGCGAGTGACCACTATTCGCGATCAGGAGCAGATACTTTACGAGCATCGGC
-----------|||||.||||-|||-----------|||..|||||||--------------|||||||-|||||------
-----------AGCATCGAGCGACT-----------TGAGTACTATTC--------------ATACTTT-CGAGC------
+target            0 ACGATCAGCGAGCATNGAGC-ACTACGACAGCGAGTGACCACTATTCGCGATCAGGAGCA
+                  0 ----------|||||.||||-|||-----------|||..|||||||-------------
+query             0 ----------AGCATCGAGCGACT-----------TGAGTACTATTC-------------
+
+target           59 GATACTTTACGAGCATCGGC 79
+                 60 -|||||||-|||||------ 80
+query            26 -ATACTTT-CGAGC------ 38
 """,
         )
         self.assertEqual(alignment.shape, (2, 80))
@@ -3902,13 +4412,13 @@ ACGATCAGCGAGCATNGAGC-ACTACGACAGCGAGTGACCACTATTCGCGATCAGGAGCAGATACTTTACGAGCATCGGC
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	10	73	query	19.0	+	10	73	0	5	10,3,12,7,5,	0,10,24,50,58,
+target	10	73	query	19	+	10	73	0	5	10,3,12,7,5,	0,10,24,50,58,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	0	target	11	255	10M1I3M11D12M14D7M1D5M	*	0	0	AGCATCGAGCGACTTGAGTACTATTCATACTTTCGAGC	*	AS:i:19
+query	0	target	1	255	10D10M1I3M11D12M14D7M1D5M6D	*	0	0	AGCATCGAGCGACTTGAGTACTATTCATACTTTCGAGC	*	AS:i:19
 """,
         )
         alignments = aligner.align(
@@ -3920,9 +4430,13 @@ query	0	target	11	255	10M1I3M11D12M14D7M1D5M	*	0	0	AGCATCGAGCGACTTGAGTACTATTCATA
         self.assertEqual(
             str(alignment),
             """\
-ACGATCAGCGAGCATNGAGC-ACTACGACAGCGAGTGACCACTATTCGCGATCAGGAGCAGATACTTTACGAGCATCGGC
-----------|||||.||||-|||-----------|||..|||||||--------------|||||||-|||||------
-----------AGCATCGAGCGACT-----------TGAGTACTATTC--------------ATACTTT-CGAGC------
+target            0 ACGATCAGCGAGCATNGAGC-ACTACGACAGCGAGTGACCACTATTCGCGATCAGGAGCA
+                  0 ----------|||||.||||-|||-----------|||..|||||||-------------
+query            38 ----------AGCATCGAGCGACT-----------TGAGTACTATTC-------------
+
+target           59 GATACTTTACGAGCATCGGC 79
+                 60 -|||||||-|||||------ 80
+query            12 -ATACTTT-CGAGC------  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 80))
@@ -3935,13 +4449,13 @@ ACGATCAGCGAGCATNGAGC-ACTACGACAGCGAGTGACCACTATTCGCGATCAGGAGCAGATACTTTACGAGCATCGGC
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	10	73	query	19.0	-	10	73	0	5	10,3,12,7,5,	0,10,24,50,58,
+target	10	73	query	19	-	10	73	0	5	10,3,12,7,5,	0,10,24,50,58,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	16	target	11	255	10M1I3M11D12M14D7M1D5M	*	0	0	AGCATCGAGCGACTTGAGTACTATTCATACTTTCGAGC	*	AS:i:19
+query	16	target	1	255	10D10M1I3M11D12M14D7M1D5M6D	*	0	0	AGCATCGAGCGACTTGAGTACTATTCATACTTTCGAGC	*	AS:i:19
 """,
         )
 
@@ -3957,9 +4471,9 @@ query	16	target	11	255	10M1I3M11D12M14D7M1D5M	*	0	0	AGCATCGAGCGACTTGAGTACTATTCAT
         self.assertEqual(
             str(alignment),
             """\
-----ACGTAGCATCAGC
-----|||||||||||||
-CCCCACGTAGCATCAGC
+target            0 ----ACGTAGCATCAGC 13
+                  0 ----||||||||||||| 17
+query             0 CCCCACGTAGCATCAGC 17
 """,
         )
         self.assertEqual(alignment.shape, (2, 17))
@@ -3972,13 +4486,13 @@ CCCCACGTAGCATCAGC
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	0	13	query	13.0	+	0	13	0	1	13,	0,
+target	0	13	query	13	+	0	13	0	1	13,	0,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	0	target	1	255	4S13M	*	0	0	CCCCACGTAGCATCAGC	*	AS:i:13
+query	0	target	1	255	4I13M	*	0	0	CCCCACGTAGCATCAGC	*	AS:i:13
 """,
         )
         alignments = aligner.align(
@@ -3990,9 +4504,9 @@ query	0	target	1	255	4S13M	*	0	0	CCCCACGTAGCATCAGC	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-----ACGTAGCATCAGC
-----|||||||||||||
-CCCCACGTAGCATCAGC
+target            0 ----ACGTAGCATCAGC 13
+                  0 ----||||||||||||| 17
+query            17 CCCCACGTAGCATCAGC  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 17))
@@ -4005,13 +4519,13 @@ CCCCACGTAGCATCAGC
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	0	13	query	13.0	-	0	13	0	1	13,	0,
+target	0	13	query	13	-	0	13	0	1	13,	0,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	16	target	1	255	4S13M	*	0	0	CCCCACGTAGCATCAGC	*	AS:i:13
+query	16	target	1	255	4I13M	*	0	0	CCCCACGTAGCATCAGC	*	AS:i:13
 """,
         )
         alignments = aligner.align("CCCCACGTAGCATCAGC", "ACGTAGCATCAGC")
@@ -4021,9 +4535,9 @@ query	16	target	1	255	4S13M	*	0	0	CCCCACGTAGCATCAGC	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-CCCCACGTAGCATCAGC
-----|||||||||||||
-----ACGTAGCATCAGC
+target            0 CCCCACGTAGCATCAGC 17
+                  0 ----||||||||||||| 17
+query             0 ----ACGTAGCATCAGC 13
 """,
         )
         self.assertEqual(alignment.shape, (2, 17))
@@ -4036,13 +4550,13 @@ CCCCACGTAGCATCAGC
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	4	17	query	13.0	+	4	17	0	1	13,	0,
+target	4	17	query	13	+	4	17	0	1	13,	0,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	0	target	5	255	13M	*	0	0	ACGTAGCATCAGC	*	AS:i:13
+query	0	target	1	255	4D13M	*	0	0	ACGTAGCATCAGC	*	AS:i:13
 """,
         )
         alignments = aligner.align(
@@ -4054,9 +4568,9 @@ query	0	target	5	255	13M	*	0	0	ACGTAGCATCAGC	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-CCCCACGTAGCATCAGC
-----|||||||||||||
-----ACGTAGCATCAGC
+target            0 CCCCACGTAGCATCAGC 17
+                  0 ----||||||||||||| 17
+query            13 ----ACGTAGCATCAGC  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 17))
@@ -4069,13 +4583,13 @@ CCCCACGTAGCATCAGC
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	4	17	query	13.0	-	4	17	0	1	13,	0,
+target	4	17	query	13	-	4	17	0	1	13,	0,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	16	target	5	255	13M	*	0	0	ACGTAGCATCAGC	*	AS:i:13
+query	16	target	1	255	4D13M	*	0	0	ACGTAGCATCAGC	*	AS:i:13
 """,
         )
         alignments = aligner.align("ACGTAGCATCAGC", "ACGTAGCATCAGCGGGG")
@@ -4084,9 +4598,9 @@ query	16	target	5	255	13M	*	0	0	ACGTAGCATCAGC	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-ACGTAGCATCAGC----
-|||||||||||||----
-ACGTAGCATCAGCGGGG
+target            0 ACGTAGCATCAGC---- 13
+                  0 |||||||||||||---- 17
+query             0 ACGTAGCATCAGCGGGG 17
 """,
         )
         self.assertEqual(alignment.shape, (2, 17))
@@ -4099,13 +4613,13 @@ ACGTAGCATCAGCGGGG
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	0	13	query	13.0	+	0	13	0	1	13,	0,
+target	0	13	query	13	+	0	13	0	1	13,	0,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	0	target	1	255	13M4S	*	0	0	ACGTAGCATCAGCGGGG	*	AS:i:13
+query	0	target	1	255	13M4I	*	0	0	ACGTAGCATCAGCGGGG	*	AS:i:13
 """,
         )
         alignments = aligner.align(
@@ -4116,9 +4630,9 @@ query	0	target	1	255	13M4S	*	0	0	ACGTAGCATCAGCGGGG	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-ACGTAGCATCAGC----
-|||||||||||||----
-ACGTAGCATCAGCGGGG
+target            0 ACGTAGCATCAGC---- 13
+                  0 |||||||||||||---- 17
+query            17 ACGTAGCATCAGCGGGG  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 17))
@@ -4131,13 +4645,13 @@ ACGTAGCATCAGCGGGG
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	0	13	query	13.0	-	0	13	0	1	13,	0,
+target	0	13	query	13	-	0	13	0	1	13,	0,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	16	target	1	255	13M4S	*	0	0	ACGTAGCATCAGCGGGG	*	AS:i:13
+query	16	target	1	255	13M4I	*	0	0	ACGTAGCATCAGCGGGG	*	AS:i:13
 """,
         )
         alignments = aligner.align("ACGTAGCATCAGCGGGG", "ACGTAGCATCAGC")
@@ -4147,9 +4661,9 @@ query	16	target	1	255	13M4S	*	0	0	ACGTAGCATCAGCGGGG	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-ACGTAGCATCAGCGGGG
-|||||||||||||----
-ACGTAGCATCAGC----
+target            0 ACGTAGCATCAGCGGGG 17
+                  0 |||||||||||||---- 17
+query             0 ACGTAGCATCAGC---- 13
 """,
         )
         self.assertEqual(alignment.shape, (2, 17))
@@ -4162,13 +4676,13 @@ ACGTAGCATCAGC----
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	0	13	query	13.0	+	0	13	0	1	13,	0,
+target	0	13	query	13	+	0	13	0	1	13,	0,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	0	target	1	255	13M	*	0	0	ACGTAGCATCAGC	*	AS:i:13
+query	0	target	1	255	13M4D	*	0	0	ACGTAGCATCAGC	*	AS:i:13
 """,
         )
         alignments = aligner.align(
@@ -4180,9 +4694,9 @@ query	0	target	1	255	13M	*	0	0	ACGTAGCATCAGC	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-ACGTAGCATCAGCGGGG
-|||||||||||||----
-ACGTAGCATCAGC----
+target            0 ACGTAGCATCAGCGGGG 17
+                  0 |||||||||||||---- 17
+query            13 ACGTAGCATCAGC----  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 17))
@@ -4195,24 +4709,25 @@ ACGTAGCATCAGC----
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	0	13	query	13.0	-	0	13	0	1	13,	0,
+target	0	13	query	13	-	0	13	0	1	13,	0,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	16	target	1	255	13M	*	0	0	ACGTAGCATCAGC	*	AS:i:13
+query	16	target	1	255	13M4D	*	0	0	ACGTAGCATCAGC	*	AS:i:13
 """,
         )
 
     def test_alignment_wildcard(self):
         aligner = Align.PairwiseAligner()
         aligner.gap_score = -10
-        aligner.end_gap_score = 0
         aligner.mismatch = -2
         aligner.wildcard = "N"
         target = "TTTTTNACGCTCGAGCAGCTACG"
         query = "ACGATCGAGCNGCTACGCCCNC"
+        # local alignment
+        aligner.mode = "local"
         # use strings for target and query
         alignments = aligner.align(target, query)
         self.assertEqual(len(alignments), 1)
@@ -4220,12 +4735,12 @@ query	16	target	1	255	13M	*	0	0	ACGTAGCATCAGC	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-TTTTTNACGCTCGAGCAGCTACG-----
-------|||.||||||.||||||-----
-------ACGATCGAGCNGCTACGCCCNC
+target            6 ACGCTCGAGCAGCTACG 23
+                  0 |||.||||||.|||||| 17
+query             0 ACGATCGAGCNGCTACG 17
 """,
         )
-        self.assertEqual(alignment.shape, (2, 28))
+        self.assertEqual(alignment.shape, (2, 17))
         self.assertEqual(
             alignment.format("psl"),
             """\
@@ -4235,7 +4750,7 @@ TTTTTNACGCTCGAGCAGCTACG-----
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	6	23	query	13.0	+	6	23	0	1	17,	0,
+target	6	23	query	13	+	6	23	0	1	17,	0,
 """,
         )
         self.assertEqual(
@@ -4250,12 +4765,12 @@ query	0	target	7	255	17M5S	*	0	0	ACGATCGAGCNGCTACGCCCNC	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-TTTTTNACGCTCGAGCAGCTACG-----
-------|||.||||||.||||||-----
-------ACGATCGAGCNGCTACGCCCNC
+target            6 ACGCTCGAGCAGCTACG 23
+                  0 |||.||||||.|||||| 17
+query            22 ACGATCGAGCNGCTACG  5
 """,
         )
-        self.assertEqual(alignment.shape, (2, 28))
+        self.assertEqual(alignment.shape, (2, 17))
         self.assertEqual(
             alignment.format("psl"),
             """\
@@ -4265,7 +4780,7 @@ TTTTTNACGCTCGAGCAGCTACG-----
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	6	23	query	13.0	-	6	23	0	1	17,	0,
+target	6	23	query	13	-	6	23	0	1	17,	0,
 """,
         )
         self.assertEqual(
@@ -4281,12 +4796,12 @@ query	16	target	7	255	17M5S	*	0	0	ACGATCGAGCNGCTACGCCCNC	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-TTTTTNACGCTCGAGCAGCTACG-----
-------|||.||||||.||||||-----
-------ACGATCGAGCNGCTACGCCCNC
+target            6 ACGCTCGAGCAGCTACG 23
+                  0 |||.||||||.|||||| 17
+query             0 ACGATCGAGCNGCTACG 17
 """,
         )
-        self.assertEqual(alignment.shape, (2, 28))
+        self.assertEqual(alignment.shape, (2, 17))
         self.assertEqual(
             alignment.format("psl"),
             """\
@@ -4296,7 +4811,7 @@ TTTTTNACGCTCGAGCAGCTACG-----
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	6	23	query	13.0	+	6	23	0	1	17,	0,
+target	6	23	query	13	+	6	23	0	1	17,	0,
 """,
         )
         self.assertEqual(
@@ -4313,9 +4828,73 @@ query	0	target	7	255	17M5S	*	0	0	ACGATCGAGCNGCTACGCCCNC	*	AS:i:13
         self.assertEqual(
             str(alignment),
             """\
-TTTTTNACGCTCGAGCAGCTACG-----
-------|||.||||||.||||||-----
-------ACGATCGAGCNGCTACGCCCNC
+target            6 ACGCTCGAGCAGCTACG 23
+                  0 |||.||||||.|||||| 17
+query            22 ACGATCGAGCNGCTACG  5
+""",
+        )
+        self.assertEqual(alignment.shape, (2, 17))
+        self.assertEqual(
+            alignment.format("psl"),
+            """\
+15	1	0	1	0	0	0	0	-	query	22	5	22	target	23	6	23	1	17,	0,	6,
+""",
+        )
+        self.assertEqual(
+            alignment.format("bed"),
+            """\
+target	6	23	query	13	-	6	23	0	1	17,	0,
+""",
+        )
+        self.assertEqual(
+            alignment.format("sam"),
+            """\
+query	16	target	7	255	17M5S	*	0	0	ACGATCGAGCNGCTACGCCCNC	*	AS:i:13
+""",
+        )
+        # global alignment
+        aligner.mode = "global"
+        aligner.end_gap_score = 0
+        # use strings for target and query
+        alignments = aligner.align(target, query)
+        self.assertEqual(len(alignments), 1)
+        alignment = alignments[0]
+        self.assertEqual(
+            str(alignment),
+            """\
+target            0 TTTTTNACGCTCGAGCAGCTACG----- 23
+                  0 ------|||.||||||.||||||----- 28
+query             0 ------ACGATCGAGCNGCTACGCCCNC 22
+""",
+        )
+        self.assertEqual(alignment.shape, (2, 28))
+        self.assertEqual(
+            alignment.format("psl"),
+            """\
+15	1	0	1	0	0	0	0	+	query	22	0	17	target	23	6	23	1	17,	0,	6,
+""",
+        )
+        self.assertEqual(
+            alignment.format("bed"),
+            """\
+target	6	23	query	13	+	6	23	0	1	17,	0,
+""",
+        )
+        self.assertEqual(
+            alignment.format("sam"),
+            """\
+query	0	target	1	255	6D17M5I	*	0	0	ACGATCGAGCNGCTACGCCCNC	*	AS:i:13
+""",
+        )
+        alignments = aligner.align(target, reverse_complement(query), strand="-")
+        self.assertEqual(len(alignments), 1)
+        alignment = alignments[0]
+        self.assertEqual(
+            str(alignment),
+            """\
+target            0 TTTTTNACGCTCGAGCAGCTACG----- 23
+                  0 ------|||.||||||.||||||----- 28
+query            22 ------ACGATCGAGCNGCTACGCCCNC  0
 """,
         )
         self.assertEqual(alignment.shape, (2, 28))
@@ -4328,13 +4907,76 @@ TTTTTNACGCTCGAGCAGCTACG-----
         self.assertEqual(
             alignment.format("bed"),
             """\
-target	6	23	query	13.0	-	6	23	0	1	17,	0,
+target	6	23	query	13	-	6	23	0	1	17,	0,
 """,
         )
         self.assertEqual(
             alignment.format("sam"),
             """\
-query	16	target	7	255	17M5S	*	0	0	ACGATCGAGCNGCTACGCCCNC	*	AS:i:13
+query	16	target	1	255	6D17M5I	*	0	0	ACGATCGAGCNGCTACGCCCNC	*	AS:i:13
+""",
+        )
+        # use Seq objects for target and query
+        alignments = aligner.align(Seq(target), Seq(query))
+        self.assertEqual(len(alignments), 1)
+        alignment = alignments[0]
+        self.assertEqual(
+            str(alignment),
+            """\
+target            0 TTTTTNACGCTCGAGCAGCTACG----- 23
+                  0 ------|||.||||||.||||||----- 28
+query             0 ------ACGATCGAGCNGCTACGCCCNC 22
+""",
+        )
+        self.assertEqual(alignment.shape, (2, 28))
+        self.assertEqual(
+            alignment.format("psl"),
+            """\
+15	1	0	1	0	0	0	0	+	query	22	0	17	target	23	6	23	1	17,	0,	6,
+""",
+        )
+        self.assertEqual(
+            alignment.format("bed"),
+            """\
+target	6	23	query	13	+	6	23	0	1	17,	0,
+""",
+        )
+        self.assertEqual(
+            alignment.format("sam"),
+            """\
+query	0	target	1	255	6D17M5I	*	0	0	ACGATCGAGCNGCTACGCCCNC	*	AS:i:13
+""",
+        )
+        alignments = aligner.align(
+            Seq(target), Seq(query).reverse_complement(), strand="-"
+        )
+        self.assertEqual(len(alignments), 1)
+        alignment = alignments[0]
+        self.assertEqual(
+            str(alignment),
+            """\
+target            0 TTTTTNACGCTCGAGCAGCTACG----- 23
+                  0 ------|||.||||||.||||||----- 28
+query            22 ------ACGATCGAGCNGCTACGCCCNC  0
+""",
+        )
+        self.assertEqual(alignment.shape, (2, 28))
+        self.assertEqual(
+            alignment.format("psl"),
+            """\
+15	1	0	1	0	0	0	0	-	query	22	5	22	target	23	6	23	1	17,	0,	6,
+""",
+        )
+        self.assertEqual(
+            alignment.format("bed"),
+            """\
+target	6	23	query	13	-	6	23	0	1	17,	0,
+""",
+        )
+        self.assertEqual(
+            alignment.format("sam"),
+            """\
+query	16	target	1	255	6D17M5I	*	0	0	ACGATCGAGCNGCTACGCCCNC	*	AS:i:13
 """,
         )
 

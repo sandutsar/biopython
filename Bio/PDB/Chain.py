@@ -10,10 +10,14 @@
 from Bio.PDB.Entity import Entity
 from Bio.PDB.internal_coords import IC_Chain
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from Bio.PDB.Model import Model
+    from Bio.PDB.Residue import Residue
 
 
-class Chain(Entity):
+class Chain(Entity["Model", "Residue"]):
     """Define Chain class.
 
     Chain is an object of type Entity, stores residues and includes a method to
@@ -197,17 +201,19 @@ class Chain(Entity):
 
         :param verbose bool: default False
             describe runtime problems
-        :param: start, fin lists
-            sequence position, insert code for begin, end of subregion to
-            process
-        :raises Exception: if any chain does not have .pic attribute
+        :param: start, fin integers
+            optional sequence positions for begin, end of subregion to process.
+            N.B. this activates serial residue assembly, <start> residue CA will
+            be at origin
+        :raises Exception: if any chain does not have .internal_coord attribute
         """
         if self.internal_coord:
             self.internal_coord.internal_to_atom_coordinates(
                 verbose=verbose, start=start, fin=fin
             )
         else:
+            structure = None if self.parent is None else self.parent.parent
             raise Exception(
                 "Structure %s Chain %s does not have internal coordinates set"
-                % (self.parent.parent, self)
+                % (structure, self)
             )

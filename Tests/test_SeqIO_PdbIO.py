@@ -3,6 +3,7 @@
 # license.  Please see the LICENSE file that should have been included
 # as part of this package.
 """Tests for SeqIO PdbIO module."""
+
 import unittest
 import warnings
 
@@ -89,13 +90,9 @@ def SeqresTestGenerator(extension, parser):
 class TestPdbSeqres(SeqresTestGenerator("pdb", "pdb-seqres")):
     """Test pdb-seqres SeqIO driver."""
 
-    pass
-
 
 class TestCifSeqres(SeqresTestGenerator("cif", "cif-seqres")):
     """Test cif-seqres SeqIO driver."""
-
-    pass
 
 
 def AtomTestGenerator(extension, parser):
@@ -175,7 +172,7 @@ class TestPdbAtom(AtomTestGenerator("pdb", "pdb-atom")):
             chain = SeqIO.read("PDB/a_structure.pdb", "pdb-atom")
         self.assertEqual(chain.id, "????:A")
         self.assertEqual(chain.annotations["chain"], "A")
-        self.assertEqual(chain.seq, "E")
+        self.assertEqual(chain.seq, "Q")
 
     def test_atom_with_insertion(self):
         """Read a PDB with residue insertion code."""

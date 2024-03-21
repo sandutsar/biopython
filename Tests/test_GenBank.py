@@ -9,7 +9,6 @@
 
 """Tests for the GenBank module."""
 
-
 import os
 import sys
 import unittest
@@ -3374,7 +3373,7 @@ class TestFeatureParser(unittest.TestCase):
         self.assertEqual(references_found, references)
         for feature1, (feature2, strand) in zip(record.features, features):
             self.assertEqual(str(feature1), feature2)
-            self.assertEqual(feature1.strand, strand)
+            self.assertEqual(feature1.location.strand, strand)
         self.assertEqual(record.dbxrefs, dbxrefs)
 
     def test_feature_parser_01(self):
@@ -7376,6 +7375,42 @@ qualifiers:
             dbxrefs,
         )
 
+    def test_features_spanning_origin(self):
+        """Test that features that span the origin on circular DNA are included correctly for different ways of specifying the topology."""
+        # This first one should fail (location of the feature should be set to none), because
+        # the file says the sequence is linear, but there is a feature that spans the origin.
+        file_fails = "GenBank/addgene-plasmid-11664-sequence-180430.gbk"
+
+        # The right warning is raised
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            record = SeqIO.read(file_fails, "gb")
+            self.assertEqual(len(caught), 1)
+            self.assertEqual(caught[0].category, BiopythonParserWarning)
+            self.assertEqual(
+                str(caught[0].message),
+                "it appears that '8569..276' is a feature that spans the origin, but the sequence topology is undefined; setting feature location to None.",
+            )
+
+        # The last feature location is None
+        self.assertIsNone(record.features[-1].location)
+
+        # This one is circular and should include the features that span the origin
+        file_succeeds = "GenBank/addgene-plasmid-39296-sequence-49545.gbk"
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            record = SeqIO.read(file_succeeds, "gb")
+            # This gives the same error for features that span the origin
+            self.assertEqual(len(caught), 2)
+            for c in caught:
+                self.assertEqual(c.category, BiopythonParserWarning)
+                self.assertTrue("unintended behavior" in str(c.message))
+
+        # The last two features should not be none
+        self.assertIsNotNone(record.features[-1].location)
+        self.assertIsNotNone(record.features[-2].location)
+
 
 class GenBankTests(unittest.TestCase):
     """GenBank tests."""
@@ -7434,7 +7469,8 @@ class GenBankTests(unittest.TestCase):
             with self.assertRaises(BiopythonParserWarning) as cm:
                 record = SeqIO.read(path, "genbank")
             self.assertEqual(
-                "Couldn't parse feature location: '-2..492'", str(cm.exception)
+                "negative starting position in feature location '-2..492'; setting feature location to None.",
+                str(cm.exception),
             )
 
     def test_001_genbank_bad_origin_wrapping_location(self):
@@ -7444,8 +7480,8 @@ class GenBankTests(unittest.TestCase):
             warnings.simplefilter("error", BiopythonParserWarning)
             with self.assertRaises(BiopythonParserWarning) as cm:
                 record = SeqIO.read(path, "genbank")
-            self.assertIn(
-                "It appears that '6801..100' is a feature that spans the origin",
+            self.assertEqual(
+                "it appears that '6801..100' is a feature that spans the origin, but the sequence topology is undefined; setting feature location to None.",
                 str(cm.exception),
             )
 
@@ -7667,7 +7703,7 @@ KEYWORDS    """,
         self.assertEqual(
             record.annotations["structured_comment"]["FluData"]["LabID"], "2008704957"
         )
-        self.assertEqual(len(record.annotations["structured_comment"]["FluData"]), 5)
+        self.assertEqual(len(record.annotations["structured_comment"]["FluData"]), 6)
         path = "GenBank/EU851978_output.gbk"
         with open(path) as ifile:
             self.assertEqual(record.format("gb"), ifile.read())
@@ -7722,7 +7758,8 @@ KEYWORDS    """,
             record = SeqIO.read(path, "genbank")
             self.assertNotIn("structured_comment", record.annotations)
             self.assertIn(
-                "Structured comment not parsed for AYW00820.", str(caught[0].message)
+                "Structured comment not parsed on malformed header line",
+                str(caught[0].message),
             )
 
     def test_locus_line_topogoly(self):
@@ -8095,7 +8132,7 @@ class LineOneTests(unittest.TestCase):
                 None,
             ),
         ]
-        for (line, topo, mol_type, div, warning_list) in tests:
+        for line, topo, mol_type, div, warning_list in tests:
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
                 scanner = GenBank.Scanner.GenBankScanner()
@@ -8169,7 +8206,7 @@ class LineOneTests(unittest.TestCase):
             ("ID   DI500001       STANDARD;      PRT;   111 AA.", None, None, None),
             ("ID   DI644510   standard; PRT;  1852 AA.", None, None, None),
         ]
-        for (line, topo, mol_type, div) in tests:
+        for line, topo, mol_type, div in tests:
             scanner = GenBank.Scanner.EmblScanner()
             consumer = GenBank._FeatureConsumer(1, GenBank.FeatureValueCleaner)
             scanner._feed_first_line(consumer, line)
@@ -8193,7 +8230,7 @@ class LineOneTests(unittest.TestCase):
             ("ID   HLA00001   standard; DNA; HUM; 3503 BP.", None, "DNA", "HUM"),
             ("ID   HLA00001; SV 1; standard; DNA; HUM; 3503 BP.", None, "DNA", "HUM"),
         ]
-        for (line, topo, mol_type, div) in tests:
+        for line, topo, mol_type, div in tests:
             scanner = GenBank.Scanner._ImgtScanner()
             consumer = GenBank._FeatureConsumer(1, GenBank.FeatureValueCleaner)
             scanner._feed_first_line(consumer, line)

@@ -16,7 +16,6 @@ We have decided to remove this module in future, and instead recommend
 building your command and invoking it via the subprocess module directly.
 """
 
-
 from Bio.Application import _Option, _Switch, AbstractCommandline
 
 
@@ -428,7 +427,7 @@ class FNeighborCommandline(_EmbossCommandLine):
             ),
             _Option(
                 ["-matrixtype", "matrixtype"],
-                "is martrix square (S), upper (U) or lower (L)",
+                "is matrix square (S), upper (U) or lower (L)",
             ),
             _Option(["-treetype", "treetype"], "nj or UPGMA tree (n/u)"),
             _Option(["-outgrno", "outgrno"], "taxon to use as OG"),

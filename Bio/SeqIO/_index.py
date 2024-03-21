@@ -25,6 +25,7 @@ sequencing. If memory is an issue, the index_db(...) interface stores the
 keys and offsets in an SQLite database - which can be re-used to avoid
 re-indexing the file for use another time.
 """
+
 import re
 
 from io import BytesIO
@@ -642,7 +643,6 @@ class FastqRandomAccess(SeqFileRandomAccess):
                 raise ValueError("Problem with quality section")
             yield id.decode(), start_offset, length
             start_offset = end_offset
-        # print("EOF")
 
     def get_raw(self, offset):
         """Return the raw record from the file as a bytes string."""

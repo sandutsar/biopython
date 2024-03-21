@@ -22,11 +22,21 @@ Contributions by:
 - and many others.
 """
 
+try:
+    import numpy as np
+except ImportError:
+    from Bio import MissingPythonDependencyError
+
+    raise MissingPythonDependencyError(
+        "Please install NumPy if you want to use Bio.PDB. See http://www.numpy.org/"
+    ) from None
+
 # Get a Structure object from a PDB file
 from .PDBParser import PDBParser
 
 from .MMCIFParser import MMCIFParser
 from .MMCIFParser import FastMMCIFParser
+from .PDBMLParser import PDBMLParser
 
 # Download from the PDB
 from .PDBList import PDBList
@@ -35,10 +45,8 @@ from .PDBList import PDBList
 from .parse_pdb_header import parse_pdb_header
 
 # Find connected polypeptides in a Structure
-from .Polypeptide import PPBuilder, CaPPBuilder, is_aa, standard_aa_names
-
-# This is also useful :-)
-from Bio.Data.SCOPData import protein_letters_3to1
+from .Polypeptide import PPBuilder, CaPPBuilder
+from .Polypeptide import is_aa, standard_aa_names, is_nucleic
 
 # IO of PDB files (including flexible selective output)
 from .PDBIO import PDBIO, Select
@@ -50,6 +58,9 @@ from . import Selection
 
 # Superimpose atom sets
 from .Superimposer import Superimposer
+
+# CEAlign structural alignment
+from .cealign import CEAligner
 
 # 3D vector class
 from .vectors import Vector, calc_angle, calc_dihedral, refmat, rotmat, rotaxis

@@ -13,7 +13,6 @@ common ancestors,...) and to manipulate trees (re-root trees, split terminal
 nodes).
 """
 
-
 import random
 import sys
 from . import Nodes
@@ -27,8 +26,6 @@ NODECOMMENT_END = "]"
 
 class TreeError(Exception):
     """Provision for the management of Tree exceptions."""
-
-    pass
 
 
 class NodeData:
@@ -441,8 +438,8 @@ class Tree(Nodes.Chain):
             and tree2.node(n).data.support >= threshold
         ]
         conflict = []
-        for (st1, sup1) in t1:
-            for (st2, sup2) in t2:
+        for st1, sup1 in t1:
+            for st2, sup2 in t2:
                 if not st1.issubset(st2) and not st2.issubset(
                     st1
                 ):  # don't hiccup on upstream nodes
@@ -537,7 +534,7 @@ class Tree(Nodes.Chain):
         """
         for n in self._walk():
             if self.node(n).data.support:
-                self.node(n).data.support /= float(nrep)
+                self.node(n).data.support /= nrep
 
     def has_support(self, node=None):
         """Return True if any of the nodes has data.support != None."""
@@ -586,7 +583,7 @@ class Tree(Nodes.Chain):
             terminals.remove(newsplit)
         # distribute taxon labels randomly
         random.shuffle(taxon_list)
-        for (node, name) in zip(terminals, taxon_list):
+        for node, name in zip(terminals, taxon_list):
             self.node(node).data.taxon = name
 
     def display(self):
@@ -630,7 +627,9 @@ class Tree(Nodes.Chain):
                         comment,
                     )
                 )
-        print("\n".join("%3s %32s %15s %15s %8s %10s %8s %20s" % l for l in table))
+        print(
+            "\n".join("%3s %32s %15s %15s %8s %10s %8s %20s" % line for line in table)
+        )
         print(f"\nRoot:  {self.root}")
 
     def to_string(
@@ -722,7 +721,7 @@ class Tree(Nodes.Chain):
             treeline.append("a_tree")
         treeline.append("=")
         if self.weight != 1:
-            treeline.append(f"[&W{str(round(float(self.weight), 3))}]")
+            treeline.append(f"[&W{round(float(self.weight), 3)!s}]")
         if self.rooted:
             treeline.append("[&R]")
         succnodes = ladderize_nodes(self.node(self.root).succ)
@@ -915,9 +914,9 @@ def consensus(trees, threshold=0.5, outgroup=None):
             subclade_taxa = sorted(t.get_taxa(st_node))
             subclade_taxa = str(subclade_taxa)  # lists are not hashable
             if subclade_taxa in clades:
-                clades[subclade_taxa] += float(t.weight) / total
+                clades[subclade_taxa] += t.weight / total
             else:
-                clades[subclade_taxa] = float(t.weight) / total
+                clades[subclade_taxa] = t.weight / total
             # if subclade_taxa in countclades:
             #    countclades[subclade_taxa]+=t.weight
             # else:
